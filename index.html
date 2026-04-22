@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tip Tracker Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>TipTracker | Analytics Dashboard</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -12,165 +12,214 @@
 
     <style>
         :root {
-            --bg: #f0f2f5;
-            --card: #ffffff;
-            --primary: #4361ee;
-            --secondary: #3f37c9;
-            --success: #4cc9f0;
-            --accent: #4895ef;
-            --text: #2b2d42;
-            --danger: #ef233c;
+            --brand: #2563eb;
+            --brand-light: #eff6ff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --surface: #ffffff;
+            --bg-app: #f8fafc;
+            --success: #10b981;
+            --danger: #ef4444;
         }
 
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-main);
             margin: 0;
-            padding: env(safe-area-inset-top) 15px 40px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .app-container { width: 100%; max-width: 500px; }
-
-        header { margin: 20px 0; text-align: center; }
-        header h1 { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin: 0; }
-
-        /* Modern Card Style */
-        .card {
-            background: var(--card);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-        }
-
-        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .full-width { grid-column: span 2; }
-
-        label { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #8d99ae; margin-bottom: 6px; display: block; }
-        
-        input, select {
-            background: #f8f9fa;
-            border: 2px solid #edf2f4;
-            border-radius: 12px;
-            padding: 12px;
-            font-size: 1rem;
-            color: var(--text);
-            width: 100%;
-            box-sizing: border-box;
-            transition: all 0.2s;
-        }
-
-        input:focus { border-color: var(--primary); outline: none; background: white; }
-
-        button {
-            border: none;
-            border-radius: 14px;
-            padding: 16px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
-        }
-
-        button:active { transform: scale(0.98); }
-
-        .btn-primary { background: var(--primary); color: white; width: 100%; margin-top: 10px; }
-        .btn-pdf { background: #edf2f4; color: var(--text); font-size: 0.85rem; width: 100%; margin-bottom: 20px; }
-
-        /* Stats Design */
-        .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .stat-card {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 15px;
-            border-radius: 18px;
-            text-align: center;
-        }
-        .stat-card.alt { background: white; color: var(--text); border: 2px solid #edf2f4; }
-        .stat-title { font-size: 0.7rem; opacity: 0.8; text-transform: uppercase; font-weight: 800; }
-        .stat-val { font-size: 1.4rem; font-weight: 800; margin: 4px 0; }
-        .stat-sub { font-size: 0.75rem; opacity: 0.9; }
-
-        /* List Design */
-        .entry-item {
-            background: white;
-            border-radius: 16px;
-            padding: 15px;
-            margin-bottom: 12px;
+        /* Navbar Style */
+        nav {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 2rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid #edf2f4;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-        .entry-info b { display: block; font-size: 0.95rem; }
-        .entry-info span { font-size: 0.8rem; color: #8d99ae; }
-        .entry-amount { text-align: right; }
-        .amt-tips { color: var(--primary); font-weight: 800; font-size: 1.1rem; }
-        .entry-actions { font-size: 0.75rem; margin-top: 5px; }
-        .action-edit { color: var(--accent); margin-right: 10px; text-decoration: none; font-weight: 700; }
-        .action-del { color: var(--danger); text-decoration: none; font-weight: 700; }
 
-        #monthSelector { margin-bottom: 15px; border-radius: 12px; font-weight: 700; color: var(--primary); }
+        .logo { font-weight: 800; font-size: 1.25rem; color: var(--brand); letter-spacing: -0.025em; }
+
+        .main-content {
+            max-width: 1000px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Layout Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 850px) {
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+
+        .panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .panel-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Form Styling */
+        .form-control { margin-bottom: 1rem; }
+        label { display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-muted); }
+        input, select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            box-sizing: border-box;
+        }
+        input:focus { border-color: var(--brand); outline: 2px solid var(--brand-light); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            width: 100%;
+        }
+
+        .btn-brand { background: var(--brand); color: white; }
+        .btn-brand:hover { background: #1d4ed8; }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); margin-top: 0.5rem; }
+
+        /* Stats Cards */
+        .stat-group { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-mini {
+            background: var(--brand-light);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid #dbeafe;
+        }
+        .stat-mini span { display: block; font-size: 0.75rem; font-weight: 600; color: var(--brand); }
+        .stat-mini b { font-size: 1.25rem; display: block; margin-top: 0.25rem; }
+
+        /* Table/List View */
+        .data-row {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 1rem;
+            transition: background 0.2s;
+        }
+        .data-row:hover { background: #fcfcfd; }
+        .date-pill {
+            background: var(--bg-app);
+            padding: 0.4rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+        .amount-text { font-weight: 700; color: var(--success); }
+        .action-btns { display: flex; gap: 0.75rem; font-size: 0.8rem; }
+        .action-btns span { cursor: pointer; font-weight: 600; }
+        .edit-txt { color: var(--brand); }
+        .del-txt { color: var(--danger); }
     </style>
 </head>
 <body>
 
-<div class="app-container">
-    <header>
-        <h1>TipTracker Cloud</h1>
-    </header>
+<nav>
+    <div class="logo">TipTracker <small style="font-weight: 400; opacity: 0.6;">v2.0</small></div>
+    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;">Cloud Connected</div>
+</nav>
 
-    <div class="card">
-        <div class="input-grid">
-            <div class="form-group full-width">
-                <label>Date</label>
-                <input type="date" id="date">
+<div class="main-content">
+    <div class="dashboard-grid">
+        
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-title">Add Entry</div>
+                <div class="form-control">
+                    <label>Shift Date</label>
+                    <input type="date" id="date">
+                </div>
+                <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
+                    <div style="flex: 1;">
+                        <label>Hours</label>
+                        <input type="number" id="h_part" placeholder="0">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Minutes</label>
+                        <input type="number" id="m_part" placeholder="0">
+                    </div>
+                </div>
+                <div class="form-control">
+                    <label>Tips (€)</label>
+                    <input type="number" id="tips" placeholder="0.00">
+                </div>
+                <input type="hidden" id="editDocId" value="">
+                <button id="mainBtn" class="btn btn-brand" onclick="handleEntry()">Post to Ledger</button>
+                <button id="cancelBtn" class="btn btn-outline" style="display:none;" onclick="resetForm()">Cancel Update</button>
             </div>
-            <div class="form-group">
-                <label>Hours</label>
-                <input type="number" id="h_part" placeholder="0">
-            </div>
-            <div class="form-group">
-                <label>Minutes</label>
-                <input type="number" id="m_part" placeholder="0">
-            </div>
-            <div class="form-group full-width">
-                <label>Tips Earned (€)</label>
-                <input type="number" id="tips" step="0.01" placeholder="0.00">
+            
+            <div class="panel" style="margin-top: 1.5rem; background: #fafafa;">
+                <div class="panel-title">Reports</div>
+                <label>Filter Month</label>
+                <select id="monthSelector" onchange="updateUI()" style="margin-bottom: 1rem;"></select>
+                <button class="btn btn-outline" onclick="downloadPDF()" style="width: 100%;">Generate PDF Report</button>
             </div>
         </div>
-        <input type="hidden" id="editDocId" value="">
-        <button id="mainBtn" class="btn-primary" onclick="handleEntry()">Save Shift</button>
-        <button id="cancelBtn" style="display:none; background:#8d99ae; color:white; width:100%; margin-top:5px;" onclick="resetForm()">Cancel</button>
+
+        <div class="analytics">
+            <div class="stat-group">
+                <div class="stat-mini">
+                    <span>Weekly Revenue</span>
+                    <b id="weekTips">€0.00</b>
+                    <small id="weekHours" style="opacity: 0.7;">0h 0m</small>
+                </div>
+                <div class="stat-mini" style="background: white; border: 1px solid var(--border);">
+                    <span style="color: var(--text-muted);">Monthly Ledger</span>
+                    <b id="monthTips">€0.00</b>
+                    <small id="monthHours" style="opacity: 0.7; color: var(--text-muted);">0h 0m</small>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Transaction History</div>
+                <div id="historyBody">
+                    </div>
+            </div>
+        </div>
+
     </div>
-
-    <select id="monthSelector" onchange="updateUI()"></select>
-
-    <div class="stats-row">
-        <div class="stat-card">
-            <div class="stat-title">Weekly Tips</div>
-            <div class="stat-val" id="weekTips">€0.00</div>
-            <div class="stat-sub" id="weekHours">0h 0m</div>
-        </div>
-        <div class="stat-card alt">
-            <div class="stat-title" style="color: #8d99ae;">Monthly Total</div>
-            <div class="stat-val" id="monthTips" style="color: var(--primary);">€0.00</div>
-            <div class="stat-sub" id="monthHours">0h 0m</div>
-        </div>
-    </div>
-
-    <button class="btn-pdf" onclick="downloadPDF()">📄 Export Monthly Report (PDF)</button>
-
-    <div id="historyBody">
-        </div>
 </div>
 
 <script>
-    // COPY AND PASTE YOUR CONFIG FROM FIREBASE CONSOLE HERE
+    // 1. FIREBASE CONFIG
     const firebaseConfig = {
         apiKey: "YOUR_API_KEY",
         authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -203,10 +252,10 @@
         const h = parseInt(document.getElementById('h_part').value) || 0;
         const m = parseInt(document.getElementById('m_part').value) || 0;
         const tips = parseFloat(document.getElementById('tips').value) || 0;
-        const editDocId = document.getElementById('editDocId').value;
-        if (!dateVal) return alert("Select a date");
-        const data = { date: dateVal, hours: h + (m / 60), tips: tips };
-        if (editDocId) await db.collection("shifts").doc(editDocId).update(data);
+        const editId = document.getElementById('editDocId').value;
+        if(!dateVal) return;
+        const data = { date: dateVal, hours: h + (m/60), tips: tips };
+        if(editId) await db.collection("shifts").doc(editId).update(data);
         else await db.collection("shifts").add(data);
         resetForm();
     }
@@ -216,27 +265,28 @@
         container.innerHTML = '';
         const selMonth = document.getElementById('monthSelector').value;
         if(!selMonth) return;
+        
         let mTips = 0, mHours = 0, wTips = 0, wHours = 0;
-        const now = new Date();
-        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).setHours(0,0,0,0);
+        const startOfWeek = new Date(new Date().setDate(new Date().getDate() - new Date().getDay() + (new Date().getDay() === 0 ? -6 : 1))).setHours(0,0,0,0);
 
         shifts.forEach((s) => {
             const sDate = new Date(s.date + 'T00:00:00');
-            if (s.date.startsWith(selMonth)) { mTips += s.tips; mHours += s.hours; }
-            if (sDate >= startOfWeek) { wTips += s.tips; wHours += s.hours; }
+            if(s.date.startsWith(selMonth)) { mTips += s.tips; mHours += s.hours; }
+            if(sDate >= startOfWeek) { wTips += s.tips; wHours += s.hours; }
             
             container.innerHTML += `
-                <div class="entry-item">
-                    <div class="entry-info">
-                        <b>${s.date}</b>
-                        <span>${formatTime(s.hours)} worked</span>
-                        <div class="entry-actions">
-                            <a href="#" class="action-edit" onclick="editShift('${s.id}')">Edit</a>
-                            <a href="#" class="action-del" onclick="deleteShift('${s.id}')">Delete</a>
-                        </div>
+                <div class="data-row">
+                    <div class="date-pill">${s.date}</div>
+                    <div>
+                        <div style="font-weight: 600; font-size: 0.9rem;">Work Shift</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted);">${formatTime(s.hours)} recorded</div>
                     </div>
-                    <div class="entry-amount">
-                        <div class="amt-tips">€${s.tips.toFixed(2)}</div>
+                    <div style="text-align: right;">
+                        <div class="amount-text">€${s.tips.toFixed(2)}</div>
+                        <div class="action-btns">
+                            <span class="edit-txt" onclick="editShift('${s.id}')">Edit</span>
+                            <span class="del-txt" onclick="deleteShift('${s.id}')">Delete</span>
+                        </div>
                     </div>
                 </div>`;
         });
@@ -262,17 +312,16 @@
         document.getElementById('m_part').value = Math.round((s.hours - Math.floor(s.hours)) * 60);
         document.getElementById('tips').value = s.tips;
         document.getElementById('editDocId').value = s.id;
-        document.getElementById('mainBtn').innerText = "Update Shift";
+        document.getElementById('mainBtn').innerText = "Update Entry";
         document.getElementById('cancelBtn').style.display = "block";
-        window.scrollTo(0,0);
     }
 
-    function deleteShift(id) { if(confirm("Delete this?")) db.collection("shifts").doc(id).delete(); }
+    function deleteShift(id) { if(confirm("Confirm deletion?")) db.collection("shifts").doc(id).delete(); }
     function resetForm() {
         document.getElementById('date').valueAsDate = new Date();
         document.getElementById('h_part').value = ""; document.getElementById('m_part').value = "";
         document.getElementById('tips').value = ""; document.getElementById('editDocId').value = "";
-        document.getElementById('mainBtn').innerText = "Save Shift";
+        document.getElementById('mainBtn').innerText = "Post to Ledger";
         document.getElementById('cancelBtn').style.display = "none";
     }
 
@@ -280,10 +329,11 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const selMonth = document.getElementById('monthSelector').value;
-        doc.text(`Tip Report: ${selMonth}`, 14, 20);
+        doc.setFontSize(18);
+        doc.text(`Earnings Report: ${selMonth}`, 14, 20);
         const data = shifts.filter(s => s.date.startsWith(selMonth)).map(s => [s.date, formatTime(s.hours), `€${s.tips.toFixed(2)}`]);
         doc.autoTable({ startY: 30, head: [['Date', 'Time', 'Tips']], body: data });
-        doc.save(`Tips_${selMonth}.pdf`);
+        doc.save(`Report_${selMonth}.pdf`);
     }
 
     document.getElementById('date').valueAsDate = new Date();
