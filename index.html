@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work & Tip Tracker Pro</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; padding: 20px; color: #333; }
+        .container { max-width: 700px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #1a73e8; margin-bottom: 25px; }
+        .form-row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+        .form-group { flex: 1; min-width: 150px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9em; }
+        input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 16px; }
+        .btn-container { margin-top: 10px; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; transition: 0.2s; }
+        .add-btn { background: #28a745; color: white; }
+        .add-btn:hover { background: #218838; }
+        .update-btn { background: #ffc107; color: #212529; display: none; }
+        
+        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 25px 0; }
+        .stat-box { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border-left: 5px solid #1a73e8; }
+        .stat-box h3 { margin: 0; font-size: 0.85em; text-transform: uppercase; color: #666; }
+        .stat-box p { margin: 5px 0 0; font-size: 1.5em; font-weight: bold; color: #1a73e8; }
+        
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; background: white; }
+        th { background: #f1f3f4; padding: 12px; text-align: left; font-size: 0.9em; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+        .actions { display: flex; gap: 8px; }
+        .edit-link { color: #1a73e8; cursor: pointer; font-size: 0.9em; text-decoration: underline; }
+        .del-link { color: #d93025; cursor: pointer; font-size: 0.9em; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Tip Tracker</h1>
+    
+    <div class="form-row">
+        <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="date">
+        </div>
+        <div class="form-group">
+            <label>Hours Worked</label>
+            <input type="number" id="hours" step="0.1" placeholder="0.0">
+        </div>
+        <div class="form-group">
+            <label>Tips (€)</label>
+            <input type="number" id="tips" step="0.01" placeholder="0.00">
+        </div>
+    </div>
+    
+    <input type="hidden" id="editIndex" value="-1">
+    <button id="mainBtn" class="add-btn" onclick="handleEntry()">Add Shift</button>
+    <button id="cancelBtn" class="update-btn" style="background:#6c757d; color:white; margin-top:5px;" onclick="resetForm()">Cancel Edit</button>
+
+    <div class="stats">
+        <div class="stat-box">
+            <h3>Weekly Tips</h3>
+            <p id="weekTotal">€0.00</p>
+        </div>
+        <div class="stat-box">
+            <h3>Monthly Tips</h3>
+            <p id="monthTotal">€0.00</p>
+        </div>
+    </div>
+
+    <table id="history">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Hours</th>
+                <th>Tips</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    let shifts = JSON.parse(localStorage.getItem('shifts')) || [];
+
+    function handleEntry() {
+        const date = document.getElementById('date').value;
+        const hours = parseFloat(document.getElementById('hours').value);
+        const tips = parseFloat(document.getElementById('tips').value);
+        const editIndex = parseInt(document.getElementById('editIndex').value);
+
+        if (!date || isNaN(hours) || isNaN(tips)) return alert("Please fill all fields");
+
+        const shiftData = { date, hours, tips };
+
+        if (editIndex === -1) {
+            shifts.push(shiftData);
+        } else {
+            shifts[editIndex] = shiftData;
+        }
+
+        saveAndUpdate();
+        resetForm();
+    }
+
+    function editShift(index) {
+        const shift = shifts[index];
+        document.getElementById('date').value = shift.date;
+        document.getElementById('hours').value = shift.hours;
+        document.getElementById('tips').value = shift.tips;
+        document.getElementById('editIndex').value = index;
+
+        document.getElementById('mainBtn').innerText = "Save Changes";
+        document.getElementById('mainBtn').className = "add-btn"; 
+        document.getElementById('mainBtn').style.background = "#f39c12";
+        document.getElementById('cancelBtn').style.display = "block";
+    }
+
+    function deleteShift(index) {
+        if(confirm("Delete this entry?")) {
+            shifts.splice(index, 1);
+            saveAndUpdate();
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('date').valueAsDate = new Date();
+        document.getElementById('hours').value = "";
+        document.getElementById('tips').value = "";
+        document.getElementById('editIndex').value = "-1";
+        document.getElementById('mainBtn').innerText = "Add Shift";
+        document.getElementById('mainBtn').style.background = "#28a745";
+        document.getElementById('cancelBtn').style.display = "none";
+    }
+
+    function saveAndUpdate() {
+        // Sort shifts by date (newest first)
+        shifts.sort((a, b) => new Date(b.date) - new Date(a.date));
+        localStorage.setItem('shifts', JSON.stringify(shifts));
+        updateUI();
+    }
+
+    function updateUI() {
+        const tbody = document.querySelector('#history tbody');
+        tbody.innerHTML = '';
+        
+        let weekSum = 0;
+        let monthSum = 0;
+        
+        const now = new Date();
+        // Calculate start of current week (Monday)
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day == 0 ? -6:1); 
+        const startOfWeek = new Date(now.setDate(diff)).setHours(0,0,0,0);
+        
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+
+        shifts.forEach((shift, index) => {
+            const shiftDate = new Date(shift.date);
+            
+            // Weekly logic
+            if (shiftDate >= startOfWeek) weekSum += shift.tips;
+            
+            // Monthly logic
+            if (shiftDate.getMonth() === currentMonth && shiftDate.getFullYear() === currentYear) {
+                monthSum += shift.tips;
+            }
+
+            const row = `<tr>
+                <td>${shift.date}</td>
+                <td>${shift.hours}h</td>
+                <td>€${shift.tips.toFixed(2)}</td>
+                <td class="actions">
+                    <span class="edit-link" onclick="editShift(${index})">Edit</span>
+                    <span class="del-link" onclick="deleteShift(${index})">Del</span>
+                </td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+
+        document.getElementById('weekTotal').innerText = `€${weekSum.toFixed(2)}`;
+        document.getElementById('monthTotal').innerText = `€${monthSum.toFixed(2)}`;
+    }
+
+    document.getElementById('date').valueAsDate = new Date();
+    updateUI();
+</script>
+
+</body>
+</html>
