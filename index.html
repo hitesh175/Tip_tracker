@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Tips Tracker</title>
+    <title>Earnings Pro | Personal Tracker</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
     <style>
-        /* Theme Variables */
         :root {
             --accent: #7b2ff7;
             --accent-soft: #f3ebff;
@@ -33,7 +32,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, system-ui, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
@@ -41,26 +40,24 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: 0.3s ease;
         }
 
         .container { width: 100%; max-width: 450px; }
 
         header { 
-            margin: 20px 0 20px; 
-            width: 100%; 
+            margin: 20px 0; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
         }
-        header h1 { font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.5px; }
 
-        /* Theme Toggle Button */
-        .theme-toggle {
+        .btn-group { display: flex; gap: 8px; }
+        .icon-btn {
             background: var(--accent-soft);
             color: var(--accent);
             border: none;
-            padding: 8px 12px;
+            padding: 10px;
             border-radius: 12px;
             font-weight: 700;
             cursor: pointer;
@@ -71,16 +68,25 @@
             background: var(--card);
             border-radius: 24px;
             padding: 24px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-            margin-bottom: 25px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
             border: 1px solid var(--border);
         }
 
-        .row { display: flex; gap: 12px; margin-bottom: 15px; }
-        .group { flex: 1; }
+        .forecast-tag {
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: block;
+            background: var(--accent-soft);
+            padding: 8px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
         label { display: block; font-size: 11px; font-weight: 800; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase; }
-        
-        input, select {
+        input {
             background: var(--input-bg);
             border: none;
             border-radius: 14px;
@@ -88,8 +94,8 @@
             font-size: 16px;
             width: 100%;
             box-sizing: border-box;
-            outline: none;
             color: var(--text);
+            margin-bottom: 15px;
         }
 
         .btn-main {
@@ -102,92 +108,106 @@
             font-weight: 700;
             width: 100%;
             cursor: pointer;
-            margin-top: 10px;
         }
 
-        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
-        .stat-box {
+        .stats-main {
             background: var(--accent-soft);
-            padding: 20px;
-            border-radius: 22px;
+            padding: 25px;
+            border-radius: 28px;
             text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid var(--accent);
         }
-        .stat-box.alt { background: var(--input-bg); }
-        .stat-label { font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; }
-        .stat-box.alt .stat-label { color: var(--text-light); }
-        .stat-val { font-size: 20px; font-weight: 800; display: block; margin-top: 4px;}
-        .stat-hours { font-size: 13px; color: var(--text-light); font-weight: 600; margin-top: 2px; }
+        .stats-main label { color: var(--accent); margin-bottom: 5px; }
+        .total-val { font-size: 32px; font-weight: 900; color: var(--text); }
+        
+        .sub-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .sub-box { background: var(--input-bg); padding: 15px; border-radius: 18px; text-align: center; }
+        .sub-box b { display: block; font-size: 16px; }
+        .sub-box span { font-size: 10px; color: var(--text-light); font-weight: 800; text-transform: uppercase; }
 
         .history-item {
             background: var(--card);
-            padding: 16px;
-            border-radius: 20px;
+            padding: 18px;
+            border-radius: 22px;
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border: 1px solid var(--border);
         }
-        .h-date { font-weight: 700; font-size: 15px; display: block; }
-        .h-time { font-size: 13px; color: var(--text-light); }
-        .h-amt { color: var(--success); font-weight: 800; font-size: 18px; }
-        
-        .actions { margin-top: 8px; }
-        .act-btn { font-size: 12px; font-weight: 700; text-decoration: none; margin-right: 12px; cursor: pointer; }
-        .edit { color: var(--accent); }
-        .delete { color: #ff3b30; }
-
-        #monthSelector { 
-            background: none; 
-            font-weight: 700; 
-            padding: 0; 
-            margin-bottom: 20px; 
-            color: var(--accent); 
-            width: auto;
+        .eff-badge {
+            font-size: 10px;
+            background: var(--success);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 6px;
+            margin-top: 4px;
+            display: inline-block;
         }
+
+        .actions { margin-top: 10px; font-size: 12px; font-weight: 700; }
+        .edit { color: var(--accent); margin-right: 15px; cursor: pointer; }
+        .delete { color: #ff3b30; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>My Tips 💰</h1>
-        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
+        <h1>Earnings Pro 🍕</h1>
+        <div class="btn-group">
+            <button class="icon-btn" onclick="backupData()">💾</button>
+            <button class="icon-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+        </div>
     </header>
 
     <div class="input-card">
-        <div class="group" style="margin-bottom:15px;">
-            <label>Shift Date</label>
-            <input type="date" id="date">
+        <span id="forecast" class="forecast-tag">Enter hours to see expected tips...</span>
+        
+        <label>Shift Date</label>
+        <input type="date" id="date">
+
+        <div style="display: flex; gap: 10px;">
+            <div style="flex: 1;">
+                <label>Hours</label>
+                <input type="number" id="h_part" placeholder="0" oninput="calculateForecast()">
+            </div>
+            <div style="flex: 1;">
+                <label>Mins</label>
+                <input type="number" id="m_part" placeholder="0" max="59" oninput="calculateForecast()">
+            </div>
         </div>
-        <div class="row">
-            <div class="group"><label>Hours</label><input type="number" id="h_part" placeholder="0"></div>
-            <div class="group"><label>Mins</label><input type="number" id="m_part" placeholder="0" max="59"></div>
-        </div>
-        <div class="group" style="margin-bottom:20px;">
-            <label>Tips (€)</label>
-            <input type="number" id="tips" step="0.01" placeholder="0.00">
-        </div>
+
+        <label>Tips Received (€)</label>
+        <input type="number" id="tips" step="0.01" placeholder="0.00">
+
         <input type="hidden" id="editIndex" value="-1">
         <button id="mainBtn" class="btn-main" onclick="handleEntry()">Save Shift</button>
-        <button id="cancelBtn" style="display:none; background:none; color:var(--text-light); border:none; width:100%; margin-top:10px; cursor:pointer;" onclick="resetForm()">Cancel</button>
+        <button id="cancelBtn" style="display:none; background:none; border:none; color:var(--text-light); width:100%; margin-top:10px;" onclick="resetForm()">Cancel</button>
     </div>
 
-    <div style="display:flex; justify-content:space-between; align-items:baseline;">
-        <select id="monthSelector" onchange="updateUI()"></select>
-        <a href="#" style="font-size: 13px; color: var(--text-light); text-decoration:none;" onclick="downloadPDF()">Export PDF</a>
-    </div>
-
-    <div class="stats">
-        <div class="stat-box">
-            <div class="stat-label">This Week</div>
-            <div id="weekTips" class="stat-val">€0.00</div>
-            <div id="weekHours" class="stat-hours">0h 0m</div>
+    <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items: center;">
+        <select id="monthSelector" onchange="updateUI()" style="background:none; border:none; font-weight:800; color:var(--accent); font-size: 16px;"></select>
+        <div class="btn-group">
+            <button class="icon-btn" style="padding: 5px 10px;" onclick="downloadPDF()">📄 PDF</button>
         </div>
-        <div class="stat-box alt">
-            <div class="stat-label">Month Total</div>
-            <div id="monthTips" class="stat-val">€0.00</div>
-            <div id="monthHours" class="stat-hours">0h 0m</div>
+    </div>
+
+    <div class="stats-main">
+        <label>Monthly Gross Income</label>
+        <div class="total-val" id="monthTotal">€0.00</div>
+        <div style="font-size: 13px; opacity: 0.7; margin-top: 5px;" id="monthHours">0h 0m worked</div>
+    </div>
+
+    <div class="sub-stats">
+        <div class="sub-box">
+            <span id="tipLabel">Monthly Tips</span>
+            <b id="monthTips">€0.00</b>
+        </div>
+        <div class="sub-box">
+            <span>Avg. Hourly</span>
+            <b id="avgRate">€0.00/h</b>
         </div>
     </div>
 
@@ -195,24 +215,51 @@
 </div>
 
 <script>
+    const BASE_PAY = 13.90;
     let shifts = JSON.parse(localStorage.getItem('my_local_tips')) || [];
 
-    // --- Theme Logic ---
+    // --- Theme Control ---
     function toggleTheme() {
         const body = document.documentElement;
         const current = body.getAttribute('data-theme');
         const next = current === 'dark' ? 'light' : 'dark';
         body.setAttribute('data-theme', next);
-        document.getElementById('themeBtn').innerText = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+        document.getElementById('themeBtn').innerText = next === 'dark' ? '☀️' : '🌙';
         localStorage.setItem('my_tip_theme', next);
     }
-
-    // Load saved theme on startup
     const savedTheme = localStorage.getItem('my_tip_theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
-    document.getElementById('themeBtn').innerText = savedTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
+    document.getElementById('themeBtn').innerText = savedTheme === 'dark' ? '☀️' : '🌙';
 
-    // --- App Logic ---
+    // --- AI Forecasting Logic ---
+    function calculateForecast() {
+        const h = parseInt(document.getElementById('h_part').value) || 0;
+        const m = parseInt(document.getElementById('m_part').value) || 0;
+        const totalH = h + (m / 60);
+
+        if (totalH > 0 && shifts.length > 0) {
+            const totalTips = shifts.reduce((acc, s) => acc + s.tips, 0);
+            const totalHours = shifts.reduce((acc, s) => acc + s.hours, 0);
+            const avgTipPerHour = totalTips / totalHours;
+            const predicted = (avgTipPerHour * totalH).toFixed(2);
+            document.getElementById('forecast').innerText = `✨ AI Forecast: Expect €${predicted} in tips`;
+        } else {
+            document.getElementById('forecast').innerText = "Enter hours to see expected tips...";
+        }
+    }
+
+    // --- Data Backup ---
+    function backupData() {
+        const dataStr = JSON.stringify(shifts);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = `tips_backup_${new Date().toISOString().slice(0,10)}.json`;
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+    }
+
+    // --- Core Logic ---
     function formatTime(decimalHours) {
         const h = Math.floor(decimalHours);
         const m = Math.round((decimalHours - h) * 60);
@@ -226,14 +273,11 @@
         const tips = parseFloat(document.getElementById('tips').value) || 0;
         const editIndex = parseInt(document.getElementById('editIndex').value);
         
-        if (!dateVal) return alert("Select a date");
+        if (!dateVal) return alert("Select Date");
         const entry = { date: dateVal, hours: h + (m/60), tips: tips };
 
-        if (editIndex === -1) {
-            shifts.push(entry);
-        } else {
-            shifts[editIndex] = entry;
-        }
+        if (editIndex === -1) shifts.push(entry);
+        else shifts[editIndex] = entry;
 
         saveAndRefresh();
         resetForm();
@@ -252,41 +296,42 @@
         const selMonth = document.getElementById('monthSelector').value;
         if(!selMonth) return;
         
-        let mTips = 0, mHours = 0, wTips = 0, wHours = 0;
-        const now = new Date();
-        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).setHours(0,0,0,0);
-
+        let mTips = 0, mHours = 0;
         shifts.forEach((s, index) => {
-            const sDate = new Date(s.date + 'T00:00:00');
             if (s.date.startsWith(selMonth)) {
                 mTips += s.tips;
                 mHours += s.hours;
-            }
-            if (sDate >= startOfWeek) {
-                wTips += s.tips;
-                wHours += s.hours;
-            }
-            
-            if (s.date.startsWith(selMonth)) {
+                
+                const dayGross = (s.hours * BASE_PAY) + s.tips;
+                const effRate = dayGross / s.hours;
+
                 container.innerHTML += `
                     <div class="history-item">
                         <div>
                             <span class="h-date">${s.date}</span>
-                            <span class="h-time">${formatTime(s.hours)} shift</span>
+                            <span style="font-size:12px; color:var(--text-light)">${formatTime(s.hours)} shift</span>
+                            <div class="eff-badge">€${effRate.toFixed(2)}/h efficiency</div>
                             <div class="actions">
-                                <span class="act-btn edit" onclick="editShift(${index})">Edit</span>
-                                <span class="act-btn delete" onclick="deleteShift(${index})">Delete</span>
+                                <span class="edit" onclick="editShift(${index})">Edit</span>
+                                <span class="delete" onclick="deleteShift(${index})">Delete</span>
                             </div>
                         </div>
-                        <div class="h-amt">€${s.tips.toFixed(2)}</div>
+                        <div style="text-align:right">
+                            <b style="font-size:18px">€${dayGross.toFixed(2)}</b>
+                            <div style="font-size:11px; color:var(--success); font-weight:700">+€${s.tips.toFixed(2)} tips</div>
+                        </div>
                     </div>`;
             }
         });
         
+        const mBase = mHours * BASE_PAY;
+        const mGross = mBase + mTips;
+        const avgRate = mHours > 0 ? (mGross / mHours) : 0;
+
+        document.getElementById('monthTotal').innerText = `€${mGross.toFixed(2)}`;
         document.getElementById('monthTips').innerText = `€${mTips.toFixed(2)}`;
-        document.getElementById('monthHours').innerText = `${formatTime(mHours)}`;
-        document.getElementById('weekTips').innerText = `€${wTips.toFixed(2)}`;
-        document.getElementById('weekHours').innerText = `${formatTime(wHours)}`;
+        document.getElementById('monthHours').innerText = `${formatTime(mHours)} worked`;
+        document.getElementById('avgRate').innerText = `€${avgRate.toFixed(2)}/h`;
     }
 
     function populateMonthSelector() {
@@ -305,16 +350,14 @@
         document.getElementById('m_part').value = Math.round((s.hours - Math.floor(s.hours)) * 60);
         document.getElementById('tips').value = s.tips;
         document.getElementById('editIndex').value = index;
-        document.getElementById('mainBtn').innerText = "Update Entry";
+        document.getElementById('mainBtn').innerText = "Update Shift";
         document.getElementById('cancelBtn').style.display = "block";
         window.scrollTo(0,0);
+        calculateForecast();
     }
 
     function deleteShift(index) {
-        if(confirm("Delete this?")) {
-            shifts.splice(index, 1);
-            saveAndRefresh();
-        }
+        if(confirm("Delete this shift?")) { shifts.splice(index, 1); saveAndRefresh(); }
     }
     
     function resetForm() {
@@ -323,6 +366,7 @@
         document.getElementById('tips').value = ""; document.getElementById('editIndex').value = "-1";
         document.getElementById('mainBtn').innerText = "Save Shift";
         document.getElementById('cancelBtn').style.display = "none";
+        calculateForecast();
     }
 
     function downloadPDF() {
@@ -330,16 +374,21 @@
         const doc = new jsPDF();
         const selMonth = document.getElementById('monthSelector').value;
         doc.setFontSize(20);
-        doc.text(`Earnings Summary: ${selMonth}`, 14, 20);
+        doc.text(`Earnings Analysis: ${selMonth}`, 14, 20);
+        
         const monthShifts = shifts.filter(s => s.date.startsWith(selMonth));
         let tT = 0, tH = 0;
         const data = monthShifts.map(s => {
+            const total = (s.hours * BASE_PAY) + s.tips;
             tT += s.tips; tH += s.hours;
-            return [s.date, formatTime(s.hours), `€${s.tips.toFixed(2)}`];
+            return [s.date, formatTime(s.hours), `€${s.tips.toFixed(2)}`, `€${total.toFixed(2)}`];
         });
-        data.push([{content: 'MONTHLY TOTAL', styles: {fontStyle: 'bold'}}, formatTime(tH), `€${tT.toFixed(2)}`]);
-        doc.autoTable({ startY: 30, head: [['Date', 'Hours', 'Tips']], body: data });
-        doc.save(`Tips_${selMonth}.pdf`);
+        
+        const gross = (tH * BASE_PAY) + tT;
+        data.push([{content: 'MONTH TOTAL', styles: {fontStyle: 'bold'}}, formatTime(tH), `€${tT.toFixed(2)}`, `€${gross.toFixed(2)}`]);
+        
+        doc.autoTable({ startY: 30, head: [['Date', 'Hours', 'Tips', 'Gross']], body: data });
+        doc.save(`Earnings_Analysis_${selMonth}.pdf`);
     }
 
     document.getElementById('date').valueAsDate = new Date();
