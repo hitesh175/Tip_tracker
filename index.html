@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Earnings Pro</title>
+    <title>My Tips</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -15,7 +16,6 @@
             --text: #1d1d1f;
             --text-muted: #86868b;
             --card: #ffffff;
-            --success: #34c759;
             --border: #f2f2f7;
         }
 
@@ -42,7 +42,6 @@
 
         header { margin: 20px 0; display: flex; justify-content: space-between; align-items: center; }
         
-        /* Input Section - More Compact */
         .input-section {
             background: var(--card);
             border-radius: 20px;
@@ -50,8 +49,6 @@
             margin-bottom: 25px;
             border: 1px solid var(--border);
         }
-
-        .forecast-text { font-size: 12px; color: var(--accent); margin-bottom: 15px; display: block; font-weight: 600; }
 
         input {
             background: rgba(120, 120, 128, 0.1);
@@ -76,8 +73,7 @@
             width: 100%;
         }
 
-        /* Hero Stats - The "Glanceable" Part */
-        .hero-stats {
+        .summary-card {
             background: var(--accent);
             color: white;
             padding: 25px;
@@ -85,11 +81,10 @@
             text-align: center;
             margin-bottom: 25px;
         }
-        .hero-label { font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
-        .hero-val { font-size: 36px; font-weight: 800; margin: 5px 0; }
-        .hero-sub { font-size: 14px; opacity: 0.9; }
+        .summary-label { font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase; }
+        .summary-val { font-size: 36px; font-weight: 800; margin: 5px 0; }
+        .summary-sub { font-size: 14px; opacity: 0.9; }
 
-        /* History Items - Much Cleaner */
         .history-card {
             background: var(--card);
             padding: 16px;
@@ -100,12 +95,9 @@
             align-items: center;
             border-bottom: 1px solid var(--border);
         }
-        .date-label { font-weight: 700; font-size: 16px; margin-bottom: 2px; display: block; }
+        .date-label { font-weight: 700; font-size: 16px; }
         .meta-label { font-size: 13px; color: var(--text-muted); }
-        
-        .amount-group { text-align: right; }
-        .total-amount { font-size: 18px; font-weight: 700; color: var(--text); }
-        .tip-amount { font-size: 13px; color: var(--success); font-weight: 600; }
+        .tip-amount { font-size: 18px; font-weight: 800; color: var(--accent); }
 
         .action-links { margin-top: 8px; font-size: 12px; }
         .action-links span { margin-right: 12px; font-weight: 600; cursor: pointer; }
@@ -115,29 +107,33 @@
 
 <div class="container">
     <header>
-        <h2 style="margin:0">Tracker</h2>
+        <h2 style="margin:0">My Tips</h2>
         <div style="display:flex; gap:10px">
-            <button onclick="backupData()" style="border:none; background:none; font-size:20px">💾</button>
             <button onclick="toggleTheme()" style="border:none; background:none; font-size:20px">🌓</button>
         </div>
     </header>
 
     <div class="input-section">
-        <span id="forecast" class="forecast-text">Estimate: --</span>
+        <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">DATE</label>
         <input type="date" id="date">
+        
+        <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">SHIFT DURATION</label>
         <div style="display:flex; gap:10px">
-            <input type="number" id="h_part" placeholder="Hrs" oninput="calculateForecast()">
-            <input type="number" id="m_part" placeholder="Mins" oninput="calculateForecast()">
+            <input type="number" id="h_part" placeholder="Hrs">
+            <input type="number" id="m_part" placeholder="Mins">
         </div>
-        <input type="number" id="tips" step="0.01" placeholder="Tips Received (€)">
+
+        <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">TIPS EARNED (€)</label>
+        <input type="number" id="tips" step="0.01" placeholder="0.00">
+        
         <input type="hidden" id="editIndex" value="-1">
-        <button id="mainBtn" class="btn-save" onclick="handleEntry()">Save Shift</button>
+        <button id="mainBtn" class="btn-save" onclick="handleEntry()">Save Tip</button>
     </div>
 
-    <div class="hero-stats">
-        <div class="hero-label">April Income</div>
-        <div class="hero-val" id="monthTotal">€0.00</div>
-        <div class="hero-sub"><span id="monthHours">0h</span> • <span id="monthTips">€0.00</span> in tips</div>
+    <div class="summary-card">
+        <div class="summary-label">Monthly Tips</div>
+        <div class="summary-val" id="monthTips">€0.00</div>
+        <div class="summary-sub" id="monthHours">0h 0m worked</div>
     </div>
 
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
@@ -149,10 +145,8 @@
 </div>
 
 <script>
-    const BASE_PAY = 13.90;
     let shifts = JSON.parse(localStorage.getItem('my_local_tips')) || [];
 
-    // --- Core Funcs ---
     function formatTime(decimalHours) {
         const h = Math.floor(decimalHours);
         const m = Math.round((decimalHours - h) * 60);
@@ -165,14 +159,6 @@
         localStorage.setItem('my_tip_theme', next);
     }
     document.documentElement.setAttribute('data-theme', localStorage.getItem('my_tip_theme') || 'light');
-
-    function calculateForecast() {
-        const h = (parseInt(document.getElementById('h_part').value) || 0) + ((parseInt(document.getElementById('m_part').value) || 0) / 60);
-        if (h > 0 && shifts.length > 0) {
-            const avg = shifts.reduce((a, b) => a + b.tips, 0) / shifts.reduce((a, b) => a + b.hours, 0);
-            document.getElementById('forecast').innerText = `Est. Tips: €${(avg * h).toFixed(2)}`;
-        }
-    }
 
     function handleEntry() {
         const d = document.getElementById('date').value;
@@ -195,12 +181,11 @@
         const container = document.getElementById('historyBody');
         const sel = document.getElementById('monthSelector').value;
         container.innerHTML = '';
-        let totalG = 0, totalT = 0, totalH = 0;
+        let totalT = 0, totalH = 0;
 
         shifts.forEach((s, i) => {
             if (s.date.startsWith(sel)) {
-                const dayG = (s.hours * BASE_PAY) + s.tips;
-                totalG += dayG; totalT += s.tips; totalH += s.hours;
+                totalT += s.tips; totalH += s.hours;
 
                 container.innerHTML += `
                     <div class="history-card">
@@ -212,16 +197,12 @@
                                 <span style="color:#ff3b30" onclick="deleteShift(${i})">Delete</span>
                             </div>
                         </div>
-                        <div class="amount-group">
-                            <div class="total-amount">€${dayG.toFixed(2)}</div>
-                            <div class="tip-amount">+€${s.tips.toFixed(2)} tips</div>
-                        </div>
+                        <div class="tip-amount">€${s.tips.toFixed(2)}</div>
                     </div>`;
             }
         });
-        document.getElementById('monthTotal').innerText = `€${totalG.toFixed(2)}`;
         document.getElementById('monthTips').innerText = `€${totalT.toFixed(2)}`;
-        document.getElementById('monthHours').innerText = formatTime(totalH);
+        document.getElementById('monthHours').innerText = formatTime(totalH) + " worked";
     }
 
     function editShift(i) {
@@ -231,17 +212,23 @@
         document.getElementById('m_part').value = Math.round((s.hours - Math.floor(s.hours)) * 60);
         document.getElementById('tips').value = s.tips;
         document.getElementById('editIndex').value = i;
-        document.getElementById('mainBtn').innerText = "Update Entry";
+        document.getElementById('mainBtn').innerText = "Update Tip";
         window.scrollTo(0,0);
     }
 
-    function deleteShift(i) { if(confirm("Delete?")) { shifts.splice(i, 1); updateUI(); } }
+    function deleteShift(i) { if(confirm("Delete this entry?")) { shifts.splice(i, 1); saveAndRefresh(); } }
     
+    function saveAndRefresh() {
+        localStorage.setItem('my_local_tips', JSON.stringify(shifts));
+        populateMonthSelector();
+        updateUI();
+    }
+
     function resetForm() {
         document.getElementById('date').valueAsDate = new Date();
         document.getElementById('h_part').value = ""; document.getElementById('m_part').value = "";
         document.getElementById('tips').value = ""; document.getElementById('editIndex').value = "-1";
-        document.getElementById('mainBtn').innerText = "Save Shift";
+        document.getElementById('mainBtn').innerText = "Save Tip";
     }
 
     function populateMonthSelector() {
@@ -253,11 +240,14 @@
         if(current) selector.value = current;
     }
 
-    function backupData() {
-        const link = document.createElement('a');
-        link.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(shifts));
-        link.download = "tips_backup.json";
-        link.click();
+    function downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const selMonth = document.getElementById('monthSelector').value;
+        doc.text(`Tips Report: ${selMonth}`, 14, 20);
+        const data = shifts.filter(s => s.date.startsWith(selMonth)).map(s => [s.date, formatTime(s.hours), `€${s.tips.toFixed(2)}`]);
+        doc.autoTable({ startY: 30, head: [['Date', 'Hours', 'Tips']], body: data });
+        doc.save(`Tips_${selMonth}.pdf`);
     }
 
     document.getElementById('date').valueAsDate = new Date();
