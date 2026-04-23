@@ -9,6 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 
     <style>
+        /* Theme Variables */
         :root {
             --accent: #7b2ff7;
             --accent-soft: #f3ebff;
@@ -17,6 +18,18 @@
             --text-light: #86868b;
             --card: #ffffff;
             --success: #34c759;
+            --input-bg: #f5f5f7;
+            --border: #f2f2f7;
+        }
+
+        [data-theme="dark"] {
+            --bg: #121212;
+            --text: #ffffff;
+            --text-light: #a1a1a6;
+            --card: #1c1c1e;
+            --accent-soft: #2c1a4d;
+            --input-bg: #2c2c2e;
+            --border: #38383a;
         }
 
         body {
@@ -28,20 +41,39 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .container { width: 100%; max-width: 450px; }
 
-        header { margin: 30px 0 20px; width: 100%; }
-        header h1 { font-size: 28px; font-weight: 800; margin: 0; letter-spacing: -0.5px; }
+        header { 
+            margin: 20px 0 20px; 
+            width: 100%; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+        }
+        header h1 { font-size: 24px; font-weight: 800; margin: 0; letter-spacing: -0.5px; }
+
+        /* Theme Toggle Button */
+        .theme-toggle {
+            background: var(--accent-soft);
+            color: var(--accent);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 14px;
+        }
 
         .input-card {
             background: var(--card);
             border-radius: 24px;
             padding: 24px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.04);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.08);
             margin-bottom: 25px;
-            border: 1px solid #f1f1f1;
+            border: 1px solid var(--border);
         }
 
         .row { display: flex; gap: 12px; margin-bottom: 15px; }
@@ -49,7 +81,7 @@
         label { display: block; font-size: 11px; font-weight: 800; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase; }
         
         input, select {
-            background: #f5f5f7;
+            background: var(--input-bg);
             border: none;
             border-radius: 14px;
             padding: 14px;
@@ -57,6 +89,7 @@
             width: 100%;
             box-sizing: border-box;
             outline: none;
+            color: var(--text);
         }
 
         .btn-main {
@@ -72,7 +105,6 @@
             margin-top: 10px;
         }
 
-        /* Stats Section - Updated for Hours */
         .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
         .stat-box {
             background: var(--accent-soft);
@@ -80,27 +112,28 @@
             border-radius: 22px;
             text-align: center;
         }
-        .stat-box.alt { background: #f2f2f7; }
+        .stat-box.alt { background: var(--input-bg); }
         .stat-label { font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; }
+        .stat-box.alt .stat-label { color: var(--text-light); }
         .stat-val { font-size: 20px; font-weight: 800; display: block; margin-top: 4px;}
         .stat-hours { font-size: 13px; color: var(--text-light); font-weight: 600; margin-top: 2px; }
 
         .history-item {
-            background: white;
+            background: var(--card);
             padding: 16px;
             border-radius: 20px;
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid #f2f2f7;
+            border: 1px solid var(--border);
         }
         .h-date { font-weight: 700; font-size: 15px; display: block; }
         .h-time { font-size: 13px; color: var(--text-light); }
         .h-amt { color: var(--success); font-weight: 800; font-size: 18px; }
         
         .actions { margin-top: 8px; }
-        .act-btn { font-size: 12px; font-weight: 700; text-decoration: none; margin-right: 12px; }
+        .act-btn { font-size: 12px; font-weight: 700; text-decoration: none; margin-right: 12px; cursor: pointer; }
         .edit { color: var(--accent); }
         .delete { color: #ff3b30; }
 
@@ -119,6 +152,7 @@
 <div class="container">
     <header>
         <h1>My Tips 💰</h1>
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn">🌙 Dark</button>
     </header>
 
     <div class="input-card">
@@ -141,7 +175,7 @@
 
     <div style="display:flex; justify-content:space-between; align-items:baseline;">
         <select id="monthSelector" onchange="updateUI()"></select>
-        <a href="#" style="font-size: 13px; color: var(--text-light);" onclick="downloadPDF()">Export PDF</a>
+        <a href="#" style="font-size: 13px; color: var(--text-light); text-decoration:none;" onclick="downloadPDF()">Export PDF</a>
     </div>
 
     <div class="stats">
@@ -163,6 +197,22 @@
 <script>
     let shifts = JSON.parse(localStorage.getItem('my_local_tips')) || [];
 
+    // --- Theme Logic ---
+    function toggleTheme() {
+        const body = document.documentElement;
+        const current = body.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        body.setAttribute('data-theme', next);
+        document.getElementById('themeBtn').innerText = next === 'dark' ? '☀️ Light' : '🌙 Dark';
+        localStorage.setItem('my_tip_theme', next);
+    }
+
+    // Load saved theme on startup
+    const savedTheme = localStorage.getItem('my_tip_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.getElementById('themeBtn').innerText = savedTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
+
+    // --- App Logic ---
     function formatTime(decimalHours) {
         const h = Math.floor(decimalHours);
         const m = Math.round((decimalHours - h) * 60);
@@ -224,8 +274,8 @@
                             <span class="h-date">${s.date}</span>
                             <span class="h-time">${formatTime(s.hours)} shift</span>
                             <div class="actions">
-                                <a href="#" class="act-btn edit" onclick="editShift(${index})">Edit</a>
-                                <a href="#" class="act-btn delete" onclick="deleteShift(${index})">Delete</a>
+                                <span class="act-btn edit" onclick="editShift(${index})">Edit</span>
+                                <span class="act-btn delete" onclick="deleteShift(${index})">Delete</span>
                             </div>
                         </div>
                         <div class="h-amt">€${s.tips.toFixed(2)}</div>
@@ -279,24 +329,17 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const selMonth = document.getElementById('monthSelector').value;
-        
         doc.setFontSize(20);
         doc.text(`Earnings Summary: ${selMonth}`, 14, 20);
-        
         const monthShifts = shifts.filter(s => s.date.startsWith(selMonth));
-        let totalTips = 0, totalHours = 0;
-        
+        let tT = 0, tH = 0;
         const data = monthShifts.map(s => {
-            totalTips += s.tips;
-            totalHours += s.hours;
+            tT += s.tips; tH += s.hours;
             return [s.date, formatTime(s.hours), `€${s.tips.toFixed(2)}`];
         });
-
-        // Add summary row at bottom
-        data.push([{content: 'MONTHLY TOTAL', styles: {fontStyle: 'bold'}}, formatTime(totalHours), `€${totalTips.toFixed(2)}`]);
-
-        doc.autoTable({ startY: 30, head: [['Date', 'Hours Worked', 'Tips Earned']], body: data });
-        doc.save(`Tips_Hours_${selMonth}.pdf`);
+        data.push([{content: 'MONTHLY TOTAL', styles: {fontStyle: 'bold'}}, formatTime(tH), `€${tT.toFixed(2)}`]);
+        doc.autoTable({ startY: 30, head: [['Date', 'Hours', 'Tips']], body: data });
+        doc.save(`Tips_${selMonth}.pdf`);
     }
 
     document.getElementById('date').valueAsDate = new Date();
