@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Tips</title>
+    <title>My Tips Tracker</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -34,7 +34,6 @@
 
         header { margin: 30px 0 20px; width: 100%; }
         header h1 { font-size: 28px; font-weight: 800; margin: 0; letter-spacing: -0.5px; }
-        header p { color: var(--text-light); margin: 5px 0 0; font-size: 14px; }
 
         .input-card {
             background: var(--card);
@@ -70,10 +69,10 @@
             font-weight: 700;
             width: 100%;
             cursor: pointer;
-            transition: 0.2s;
             margin-top: 10px;
         }
 
+        /* Stats Section - Updated for Hours */
         .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
         .stat-box {
             background: var(--accent-soft);
@@ -83,7 +82,8 @@
         }
         .stat-box.alt { background: #f2f2f7; }
         .stat-label { font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; }
-        .stat-val { font-size: 22px; font-weight: 800; display: block; margin-top: 4px;}
+        .stat-val { font-size: 20px; font-weight: 800; display: block; margin-top: 4px;}
+        .stat-hours { font-size: 13px; color: var(--text-light); font-weight: 600; margin-top: 2px; }
 
         .history-item {
             background: white;
@@ -119,7 +119,6 @@
 <div class="container">
     <header>
         <h1>My Tips 💰</h1>
-        <p>Record your earnings </p>
     </header>
 
     <div class="input-card">
@@ -149,10 +148,12 @@
         <div class="stat-box">
             <div class="stat-label">This Week</div>
             <div id="weekTips" class="stat-val">€0.00</div>
+            <div id="weekHours" class="stat-hours">0h 0m</div>
         </div>
         <div class="stat-box alt">
             <div class="stat-label">Month Total</div>
             <div id="monthTips" class="stat-val">€0.00</div>
+            <div id="monthHours" class="stat-hours">0h 0m</div>
         </div>
     </div>
 
@@ -189,7 +190,6 @@
     }
 
     function saveAndRefresh() {
-        // Sort by date descending
         shifts.sort((a, b) => new Date(b.date) - new Date(a.date));
         localStorage.setItem('my_local_tips', JSON.stringify(shifts));
         populateMonthSelector();
@@ -202,21 +202,27 @@
         const selMonth = document.getElementById('monthSelector').value;
         if(!selMonth) return;
         
-        let mTips = 0, wTips = 0;
+        let mTips = 0, mHours = 0, wTips = 0, wHours = 0;
         const now = new Date();
         const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).setHours(0,0,0,0);
 
         shifts.forEach((s, index) => {
             const sDate = new Date(s.date + 'T00:00:00');
-            if (s.date.startsWith(selMonth)) mTips += s.tips;
-            if (sDate >= startOfWeek) wTips += s.tips;
+            if (s.date.startsWith(selMonth)) {
+                mTips += s.tips;
+                mHours += s.hours;
+            }
+            if (sDate >= startOfWeek) {
+                wTips += s.tips;
+                wHours += s.hours;
+            }
             
             if (s.date.startsWith(selMonth)) {
                 container.innerHTML += `
                     <div class="history-item">
                         <div>
                             <span class="h-date">${s.date}</span>
-                            <span class="h-time">${formatTime(s.hours)}</span>
+                            <span class="h-time">${formatTime(s.hours)} shift</span>
                             <div class="actions">
                                 <a href="#" class="act-btn edit" onclick="editShift(${index})">Edit</a>
                                 <a href="#" class="act-btn delete" onclick="deleteShift(${index})">Delete</a>
@@ -226,8 +232,11 @@
                     </div>`;
             }
         });
+        
         document.getElementById('monthTips').innerText = `€${mTips.toFixed(2)}`;
+        document.getElementById('monthHours').innerText = `${formatTime(mHours)}`;
         document.getElementById('weekTips').innerText = `€${wTips.toFixed(2)}`;
+        document.getElementById('weekHours').innerText = `${formatTime(wHours)}`;
     }
 
     function populateMonthSelector() {
@@ -270,10 +279,24 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const selMonth = document.getElementById('monthSelector').value;
-        doc.text(`Tips: ${selMonth}`, 14, 20);
-        const data = shifts.filter(s => s.date.startsWith(selMonth)).map(s => [s.date, formatTime(s.hours), `€${s.tips.toFixed(2)}`]);
-        doc.autoTable({ startY: 30, head: [['Date', 'Hours', 'Tips']], body: data });
-        doc.save(`Tips_${selMonth}.pdf`);
+        
+        doc.setFontSize(20);
+        doc.text(`Earnings Summary: ${selMonth}`, 14, 20);
+        
+        const monthShifts = shifts.filter(s => s.date.startsWith(selMonth));
+        let totalTips = 0, totalHours = 0;
+        
+        const data = monthShifts.map(s => {
+            totalTips += s.tips;
+            totalHours += s.hours;
+            return [s.date, formatTime(s.hours), `€${s.tips.toFixed(2)}`];
+        });
+
+        // Add summary row at bottom
+        data.push([{content: 'MONTHLY TOTAL', styles: {fontStyle: 'bold'}}, formatTime(totalHours), `€${totalTips.toFixed(2)}`]);
+
+        doc.autoTable({ startY: 30, head: [['Date', 'Hours Worked', 'Tips Earned']], body: data });
+        doc.save(`Tips_Hours_${selMonth}.pdf`);
     }
 
     document.getElementById('date').valueAsDate = new Date();
