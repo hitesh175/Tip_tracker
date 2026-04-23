@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Earnings Pro | Personal Tracker</title>
+    <title>Earnings Pro</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -11,204 +11,138 @@
     <style>
         :root {
             --accent: #7b2ff7;
-            --accent-soft: #f3ebff;
             --bg: #fdfdff;
             --text: #1d1d1f;
-            --text-light: #86868b;
+            --text-muted: #86868b;
             --card: #ffffff;
             --success: #34c759;
-            --input-bg: #f5f5f7;
             --border: #f2f2f7;
         }
 
         [data-theme="dark"] {
-            --bg: #121212;
+            --bg: #000000;
             --text: #ffffff;
-            --text-light: #a1a1a6;
+            --text-muted: #8e8e93;
             --card: #1c1c1e;
-            --accent-soft: #2c1a4d;
-            --input-bg: #2c2c2e;
-            --border: #38383a;
+            --border: #2c2c2e;
         }
 
         body {
-            font-family: -apple-system, system-ui, sans-serif;
+            font-family: -apple-system, sans-serif;
             background-color: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: env(safe-area-inset-top) 15px 40px;
+            padding: env(safe-area-inset-top) 20px 40px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: 0.3s ease;
         }
 
-        .container { width: 100%; max-width: 450px; }
+        .container { width: 100%; max-width: 400px; }
 
-        header { 
-            margin: 20px 0; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-        }
-
-        .btn-group { display: flex; gap: 8px; }
-        .icon-btn {
-            background: var(--accent-soft);
-            color: var(--accent);
-            border: none;
-            padding: 10px;
-            border-radius: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .input-card {
+        header { margin: 20px 0; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Input Section - More Compact */
+        .input-section {
             background: var(--card);
-            border-radius: 24px;
-            padding: 24px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.06);
-            margin-bottom: 20px;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 25px;
             border: 1px solid var(--border);
         }
 
-        .forecast-tag {
-            font-size: 12px;
-            color: var(--accent);
-            font-weight: 600;
-            margin-bottom: 15px;
-            display: block;
-            background: var(--accent-soft);
-            padding: 8px;
-            border-radius: 8px;
-            text-align: center;
-        }
+        .forecast-text { font-size: 12px; color: var(--accent); margin-bottom: 15px; display: block; font-weight: 600; }
 
-        label { display: block; font-size: 11px; font-weight: 800; color: var(--text-light); margin-bottom: 6px; text-transform: uppercase; }
         input {
-            background: var(--input-bg);
+            background: rgba(120, 120, 128, 0.1);
             border: none;
-            border-radius: 14px;
-            padding: 14px;
+            border-radius: 10px;
+            padding: 12px;
             font-size: 16px;
             width: 100%;
-            box-sizing: border-box;
             color: var(--text);
-            margin-bottom: 15px;
+            margin-bottom: 12px;
+            box-sizing: border-box;
         }
 
-        .btn-main {
+        .btn-save {
             background: var(--accent);
             color: white;
             border: none;
-            border-radius: 16px;
-            padding: 18px;
+            border-radius: 12px;
+            padding: 15px;
             font-size: 16px;
             font-weight: 700;
             width: 100%;
-            cursor: pointer;
         }
 
-        .stats-main {
-            background: var(--accent-soft);
+        /* Hero Stats - The "Glanceable" Part */
+        .hero-stats {
+            background: var(--accent);
+            color: white;
             padding: 25px;
-            border-radius: 28px;
+            border-radius: 24px;
             text-align: center;
-            margin-bottom: 20px;
-            border: 1px solid var(--accent);
+            margin-bottom: 25px;
         }
-        .stats-main label { color: var(--accent); margin-bottom: 5px; }
-        .total-val { font-size: 32px; font-weight: 900; color: var(--text); }
-        
-        .sub-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        .sub-box { background: var(--input-bg); padding: 15px; border-radius: 18px; text-align: center; }
-        .sub-box b { display: block; font-size: 16px; }
-        .sub-box span { font-size: 10px; color: var(--text-light); font-weight: 800; text-transform: uppercase; }
+        .hero-label { font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; }
+        .hero-val { font-size: 36px; font-weight: 800; margin: 5px 0; }
+        .hero-sub { font-size: 14px; opacity: 0.9; }
 
-        .history-item {
+        /* History Items - Much Cleaner */
+        .history-card {
             background: var(--card);
-            padding: 18px;
-            border-radius: 22px;
+            padding: 16px;
+            border-radius: 16px;
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
         }
-        .eff-badge {
-            font-size: 10px;
-            background: var(--success);
-            color: white;
-            padding: 2px 6px;
-            border-radius: 6px;
-            margin-top: 4px;
-            display: inline-block;
-        }
+        .date-label { font-weight: 700; font-size: 16px; margin-bottom: 2px; display: block; }
+        .meta-label { font-size: 13px; color: var(--text-muted); }
+        
+        .amount-group { text-align: right; }
+        .total-amount { font-size: 18px; font-weight: 700; color: var(--text); }
+        .tip-amount { font-size: 13px; color: var(--success); font-weight: 600; }
 
-        .actions { margin-top: 10px; font-size: 12px; font-weight: 700; }
-        .edit { color: var(--accent); margin-right: 15px; cursor: pointer; }
-        .delete { color: #ff3b30; cursor: pointer; }
+        .action-links { margin-top: 8px; font-size: 12px; }
+        .action-links span { margin-right: 12px; font-weight: 600; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <header>
-        <h1>Earnings Pro 🍕</h1>
-        <div class="btn-group">
-            <button class="icon-btn" onclick="backupData()">💾</button>
-            <button class="icon-btn" onclick="toggleTheme()" id="themeBtn">🌙</button>
+        <h2 style="margin:0">Tracker</h2>
+        <div style="display:flex; gap:10px">
+            <button onclick="backupData()" style="border:none; background:none; font-size:20px">💾</button>
+            <button onclick="toggleTheme()" style="border:none; background:none; font-size:20px">🌓</button>
         </div>
     </header>
 
-    <div class="input-card">
-        <span id="forecast" class="forecast-tag">Enter hours to see expected tips...</span>
-        
-        <label>Shift Date</label>
+    <div class="input-section">
+        <span id="forecast" class="forecast-text">Estimate: --</span>
         <input type="date" id="date">
-
-        <div style="display: flex; gap: 10px;">
-            <div style="flex: 1;">
-                <label>Hours</label>
-                <input type="number" id="h_part" placeholder="0" oninput="calculateForecast()">
-            </div>
-            <div style="flex: 1;">
-                <label>Mins</label>
-                <input type="number" id="m_part" placeholder="0" max="59" oninput="calculateForecast()">
-            </div>
+        <div style="display:flex; gap:10px">
+            <input type="number" id="h_part" placeholder="Hrs" oninput="calculateForecast()">
+            <input type="number" id="m_part" placeholder="Mins" oninput="calculateForecast()">
         </div>
-
-        <label>Tips Received (€)</label>
-        <input type="number" id="tips" step="0.01" placeholder="0.00">
-
+        <input type="number" id="tips" step="0.01" placeholder="Tips Received (€)">
         <input type="hidden" id="editIndex" value="-1">
-        <button id="mainBtn" class="btn-main" onclick="handleEntry()">Save Shift</button>
-        <button id="cancelBtn" style="display:none; background:none; border:none; color:var(--text-light); width:100%; margin-top:10px;" onclick="resetForm()">Cancel</button>
+        <button id="mainBtn" class="btn-save" onclick="handleEntry()">Save Shift</button>
     </div>
 
-    <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items: center;">
-        <select id="monthSelector" onchange="updateUI()" style="background:none; border:none; font-weight:800; color:var(--accent); font-size: 16px;"></select>
-        <div class="btn-group">
-            <button class="icon-btn" style="padding: 5px 10px;" onclick="downloadPDF()">📄 PDF</button>
-        </div>
+    <div class="hero-stats">
+        <div class="hero-label">April Income</div>
+        <div class="hero-val" id="monthTotal">€0.00</div>
+        <div class="hero-sub"><span id="monthHours">0h</span> • <span id="monthTips">€0.00</span> in tips</div>
     </div>
 
-    <div class="stats-main">
-        <label>Monthly Gross Income</label>
-        <div class="total-val" id="monthTotal">€0.00</div>
-        <div style="font-size: 13px; opacity: 0.7; margin-top: 5px;" id="monthHours">0h 0m worked</div>
-    </div>
-
-    <div class="sub-stats">
-        <div class="sub-box">
-            <span id="tipLabel">Monthly Tips</span>
-            <b id="monthTips">€0.00</b>
-        </div>
-        <div class="sub-box">
-            <span>Avg. Hourly</span>
-            <b id="avgRate">€0.00/h</b>
-        </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
+        <select id="monthSelector" onchange="updateUI()" style="background:none; border:none; font-weight:700; color:var(--accent)"></select>
+        <span onclick="downloadPDF()" style="font-size:12px; color:var(--text-muted); cursor:pointer">Export PDF</span>
     </div>
 
     <div id="historyBody"></div>
@@ -218,120 +152,96 @@
     const BASE_PAY = 13.90;
     let shifts = JSON.parse(localStorage.getItem('my_local_tips')) || [];
 
-    // --- Theme Control ---
-    function toggleTheme() {
-        const body = document.documentElement;
-        const current = body.getAttribute('data-theme');
-        const next = current === 'dark' ? 'light' : 'dark';
-        body.setAttribute('data-theme', next);
-        document.getElementById('themeBtn').innerText = next === 'dark' ? '☀️' : '🌙';
-        localStorage.setItem('my_tip_theme', next);
-    }
-    const savedTheme = localStorage.getItem('my_tip_theme') || 'light';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    document.getElementById('themeBtn').innerText = savedTheme === 'dark' ? '☀️' : '🌙';
-
-    // --- AI Forecasting Logic ---
-    function calculateForecast() {
-        const h = parseInt(document.getElementById('h_part').value) || 0;
-        const m = parseInt(document.getElementById('m_part').value) || 0;
-        const totalH = h + (m / 60);
-
-        if (totalH > 0 && shifts.length > 0) {
-            const totalTips = shifts.reduce((acc, s) => acc + s.tips, 0);
-            const totalHours = shifts.reduce((acc, s) => acc + s.hours, 0);
-            const avgTipPerHour = totalTips / totalHours;
-            const predicted = (avgTipPerHour * totalH).toFixed(2);
-            document.getElementById('forecast').innerText = `✨ AI Forecast: Expect €${predicted} in tips`;
-        } else {
-            document.getElementById('forecast').innerText = "Enter hours to see expected tips...";
-        }
-    }
-
-    // --- Data Backup ---
-    function backupData() {
-        const dataStr = JSON.stringify(shifts);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-        const exportFileDefaultName = `tips_backup_${new Date().toISOString().slice(0,10)}.json`;
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
-    }
-
-    // --- Core Logic ---
+    // --- Core Funcs ---
     function formatTime(decimalHours) {
         const h = Math.floor(decimalHours);
         const m = Math.round((decimalHours - h) * 60);
         return `${h}h ${m}m`;
     }
 
-    function handleEntry() {
-        const dateVal = document.getElementById('date').value;
-        const h = parseInt(document.getElementById('h_part').value) || 0;
-        const m = parseInt(document.getElementById('m_part').value) || 0;
-        const tips = parseFloat(document.getElementById('tips').value) || 0;
-        const editIndex = parseInt(document.getElementById('editIndex').value);
-        
-        if (!dateVal) return alert("Select Date");
-        const entry = { date: dateVal, hours: h + (m/60), tips: tips };
+    function toggleTheme() {
+        const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', next);
+        localStorage.setItem('my_tip_theme', next);
+    }
+    document.documentElement.setAttribute('data-theme', localStorage.getItem('my_tip_theme') || 'light');
 
-        if (editIndex === -1) shifts.push(entry);
-        else shifts[editIndex] = entry;
-
-        saveAndRefresh();
-        resetForm();
+    function calculateForecast() {
+        const h = (parseInt(document.getElementById('h_part').value) || 0) + ((parseInt(document.getElementById('m_part').value) || 0) / 60);
+        if (h > 0 && shifts.length > 0) {
+            const avg = shifts.reduce((a, b) => a + b.tips, 0) / shifts.reduce((a, b) => a + b.hours, 0);
+            document.getElementById('forecast').innerText = `Est. Tips: €${(avg * h).toFixed(2)}`;
+        }
     }
 
-    function saveAndRefresh() {
+    function handleEntry() {
+        const d = document.getElementById('date').value;
+        const h = (parseInt(document.getElementById('h_part').value) || 0) + ((parseInt(document.getElementById('m_part').value) || 0) / 60);
+        const t = parseFloat(document.getElementById('tips').value) || 0;
+        const idx = parseInt(document.getElementById('editIndex').value);
+        if (!d) return;
+        
+        const entry = { date: d, hours: h, tips: t };
+        if (idx === -1) shifts.push(entry); else shifts[idx] = entry;
+        
         shifts.sort((a, b) => new Date(b.date) - new Date(a.date));
         localStorage.setItem('my_local_tips', JSON.stringify(shifts));
         populateMonthSelector();
         updateUI();
+        resetForm();
     }
 
     function updateUI() {
         const container = document.getElementById('historyBody');
+        const sel = document.getElementById('monthSelector').value;
         container.innerHTML = '';
-        const selMonth = document.getElementById('monthSelector').value;
-        if(!selMonth) return;
-        
-        let mTips = 0, mHours = 0;
-        shifts.forEach((s, index) => {
-            if (s.date.startsWith(selMonth)) {
-                mTips += s.tips;
-                mHours += s.hours;
-                
-                const dayGross = (s.hours * BASE_PAY) + s.tips;
-                const effRate = dayGross / s.hours;
+        let totalG = 0, totalT = 0, totalH = 0;
+
+        shifts.forEach((s, i) => {
+            if (s.date.startsWith(sel)) {
+                const dayG = (s.hours * BASE_PAY) + s.tips;
+                totalG += dayG; totalT += s.tips; totalH += s.hours;
 
                 container.innerHTML += `
-                    <div class="history-item">
+                    <div class="history-card">
                         <div>
-                            <span class="h-date">${s.date}</span>
-                            <span style="font-size:12px; color:var(--text-light)">${formatTime(s.hours)} shift</span>
-                            <div class="eff-badge">€${effRate.toFixed(2)}/h efficiency</div>
-                            <div class="actions">
-                                <span class="edit" onclick="editShift(${index})">Edit</span>
-                                <span class="delete" onclick="deleteShift(${index})">Delete</span>
+                            <span class="date-label">${s.date}</span>
+                            <span class="meta-label">${formatTime(s.hours)} worked</span>
+                            <div class="action-links">
+                                <span style="color:var(--accent)" onclick="editShift(${i})">Edit</span>
+                                <span style="color:#ff3b30" onclick="deleteShift(${i})">Delete</span>
                             </div>
                         </div>
-                        <div style="text-align:right">
-                            <b style="font-size:18px">€${dayGross.toFixed(2)}</b>
-                            <div style="font-size:11px; color:var(--success); font-weight:700">+€${s.tips.toFixed(2)} tips</div>
+                        <div class="amount-group">
+                            <div class="total-amount">€${dayG.toFixed(2)}</div>
+                            <div class="tip-amount">+€${s.tips.toFixed(2)} tips</div>
                         </div>
                     </div>`;
             }
         });
-        
-        const mBase = mHours * BASE_PAY;
-        const mGross = mBase + mTips;
-        const avgRate = mHours > 0 ? (mGross / mHours) : 0;
+        document.getElementById('monthTotal').innerText = `€${totalG.toFixed(2)}`;
+        document.getElementById('monthTips').innerText = `€${totalT.toFixed(2)}`;
+        document.getElementById('monthHours').innerText = formatTime(totalH);
+    }
 
-        document.getElementById('monthTotal').innerText = `€${mGross.toFixed(2)}`;
-        document.getElementById('monthTips').innerText = `€${mTips.toFixed(2)}`;
-        document.getElementById('monthHours').innerText = `${formatTime(mHours)} worked`;
-        document.getElementById('avgRate').innerText = `€${avgRate.toFixed(2)}/h`;
+    function editShift(i) {
+        const s = shifts[i];
+        document.getElementById('date').value = s.date;
+        document.getElementById('h_part').value = Math.floor(s.hours);
+        document.getElementById('m_part').value = Math.round((s.hours - Math.floor(s.hours)) * 60);
+        document.getElementById('tips').value = s.tips;
+        document.getElementById('editIndex').value = i;
+        document.getElementById('mainBtn').innerText = "Update Entry";
+        window.scrollTo(0,0);
+    }
+
+    function deleteShift(i) { if(confirm("Delete?")) { shifts.splice(i, 1); updateUI(); } }
+    
+    function resetForm() {
+        document.getElementById('date').valueAsDate = new Date();
+        document.getElementById('h_part').value = ""; document.getElementById('m_part').value = "";
+        document.getElementById('tips').value = ""; document.getElementById('editIndex').value = "-1";
+        document.getElementById('mainBtn').innerText = "Save Shift";
     }
 
     function populateMonthSelector() {
@@ -343,56 +253,16 @@
         if(current) selector.value = current;
     }
 
-    function editShift(index) {
-        const s = shifts[index];
-        document.getElementById('date').value = s.date;
-        document.getElementById('h_part').value = Math.floor(s.hours);
-        document.getElementById('m_part').value = Math.round((s.hours - Math.floor(s.hours)) * 60);
-        document.getElementById('tips').value = s.tips;
-        document.getElementById('editIndex').value = index;
-        document.getElementById('mainBtn').innerText = "Update Shift";
-        document.getElementById('cancelBtn').style.display = "block";
-        window.scrollTo(0,0);
-        calculateForecast();
-    }
-
-    function deleteShift(index) {
-        if(confirm("Delete this shift?")) { shifts.splice(index, 1); saveAndRefresh(); }
-    }
-    
-    function resetForm() {
-        document.getElementById('date').valueAsDate = new Date();
-        document.getElementById('h_part').value = ""; document.getElementById('m_part').value = "";
-        document.getElementById('tips').value = ""; document.getElementById('editIndex').value = "-1";
-        document.getElementById('mainBtn').innerText = "Save Shift";
-        document.getElementById('cancelBtn').style.display = "none";
-        calculateForecast();
-    }
-
-    function downloadPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const selMonth = document.getElementById('monthSelector').value;
-        doc.setFontSize(20);
-        doc.text(`Earnings Analysis: ${selMonth}`, 14, 20);
-        
-        const monthShifts = shifts.filter(s => s.date.startsWith(selMonth));
-        let tT = 0, tH = 0;
-        const data = monthShifts.map(s => {
-            const total = (s.hours * BASE_PAY) + s.tips;
-            tT += s.tips; tH += s.hours;
-            return [s.date, formatTime(s.hours), `€${s.tips.toFixed(2)}`, `€${total.toFixed(2)}`];
-        });
-        
-        const gross = (tH * BASE_PAY) + tT;
-        data.push([{content: 'MONTH TOTAL', styles: {fontStyle: 'bold'}}, formatTime(tH), `€${tT.toFixed(2)}`, `€${gross.toFixed(2)}`]);
-        
-        doc.autoTable({ startY: 30, head: [['Date', 'Hours', 'Tips', 'Gross']], body: data });
-        doc.save(`Earnings_Analysis_${selMonth}.pdf`);
+    function backupData() {
+        const link = document.createElement('a');
+        link.href = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(shifts));
+        link.download = "tips_backup.json";
+        link.click();
     }
 
     document.getElementById('date').valueAsDate = new Date();
-    saveAndRefresh();
+    populateMonthSelector();
+    updateUI();
 </script>
 </body>
 </html>
