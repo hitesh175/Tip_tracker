@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -17,6 +16,7 @@
             --text-muted: #86868b;
             --card: #ffffff;
             --border: #f2f2f7;
+            --weekly-bg: #f3ebff;
         }
 
         [data-theme="dark"] {
@@ -25,6 +25,7 @@
             --text-muted: #8e8e93;
             --card: #1c1c1e;
             --border: #2c2c2e;
+            --weekly-bg: #2c1a4d;
         }
 
         body {
@@ -73,17 +74,32 @@
             width: 100%;
         }
 
+        /* Monthly Summary Card */
         .summary-card {
             background: var(--accent);
             color: white;
             padding: 25px;
             border-radius: 24px;
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
         }
         .summary-label { font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase; }
         .summary-val { font-size: 36px; font-weight: 800; margin: 5px 0; }
         .summary-sub { font-size: 14px; opacity: 0.9; }
+
+        /* New Weekly Hours Section */
+        .weekly-stats {
+            background: var(--weekly-bg);
+            padding: 15px 20px;
+            border-radius: 20px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--accent);
+        }
+        .weekly-label { font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; }
+        .weekly-val { font-size: 18px; font-weight: 800; color: var(--text); }
 
         .history-card {
             background: var(--card);
@@ -117,13 +133,13 @@
         <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">DATE</label>
         <input type="date" id="date">
         
-        <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">SHIFT DURATION</label>
+        <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">DURATION</label>
         <div style="display:flex; gap:10px">
             <input type="number" id="h_part" placeholder="Hrs">
             <input type="number" id="m_part" placeholder="Mins">
         </div>
 
-        <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">TIPS EARNED (€)</label>
+        <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">TIPS (€)</label>
         <input type="number" id="tips" step="0.01" placeholder="0.00">
         
         <input type="hidden" id="editIndex" value="-1">
@@ -133,7 +149,18 @@
     <div class="summary-card">
         <div class="summary-label">Monthly Tips</div>
         <div class="summary-val" id="monthTips">€0.00</div>
-        <div class="summary-sub" id="monthHours">0h 0m worked</div>
+        <div class="summary-sub" id="monthHours">0h 0m total</div>
+    </div>
+
+    <div class="weekly-stats">
+        <div>
+            <div class="weekly-label">This Week's Hours</div>
+            <div class="weekly-val" id="weekHours">0h 0m</div>
+        </div>
+        <div style="text-align: right;">
+            <div class="weekly-label">Week Tips</div>
+            <div class="weekly-val" id="weekTips" style="color: var(--accent);">€0.00</div>
+        </div>
     </div>
 
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
@@ -145,6 +172,7 @@
 </div>
 
 <script>
+    // Data remains safe in localStorage
     let shifts = JSON.parse(localStorage.getItem('my_local_tips')) || [];
 
     function formatTime(decimalHours) {
@@ -170,10 +198,7 @@
         const entry = { date: d, hours: h, tips: t };
         if (idx === -1) shifts.push(entry); else shifts[idx] = entry;
         
-        shifts.sort((a, b) => new Date(b.date) - new Date(a.date));
-        localStorage.setItem('my_local_tips', JSON.stringify(shifts));
-        populateMonthSelector();
-        updateUI();
+        saveAndRefresh();
         resetForm();
     }
 
@@ -181,11 +206,22 @@
         const container = document.getElementById('historyBody');
         const sel = document.getElementById('monthSelector').value;
         container.innerHTML = '';
-        let totalT = 0, totalH = 0;
+        
+        let mTips = 0, mHours = 0, wTips = 0, wHours = 0;
+        
+        // Calculate start of current week (Monday)
+        const now = new Date();
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1); 
+        const startOfWeek = new Date(now.setDate(diff)).setHours(0,0,0,0);
 
         shifts.forEach((s, i) => {
+            const sDate = new Date(s.date + 'T00:00:00');
+            
+            // Monthly Logic
             if (s.date.startsWith(sel)) {
-                totalT += s.tips; totalH += s.hours;
+                mTips += s.tips; 
+                mHours += s.hours;
 
                 container.innerHTML += `
                     <div class="history-card">
@@ -200,9 +236,18 @@
                         <div class="tip-amount">€${s.tips.toFixed(2)}</div>
                     </div>`;
             }
+
+            // Weekly Logic
+            if (sDate >= startOfWeek) {
+                wTips += s.tips;
+                wHours += s.hours;
+            }
         });
-        document.getElementById('monthTips').innerText = `€${totalT.toFixed(2)}`;
-        document.getElementById('monthHours').innerText = formatTime(totalH) + " worked";
+
+        document.getElementById('monthTips').innerText = `€${mTips.toFixed(2)}`;
+        document.getElementById('monthHours').innerText = formatTime(mHours) + " total";
+        document.getElementById('weekHours').innerText = formatTime(wHours);
+        document.getElementById('weekTips').innerText = `€${wTips.toFixed(2)}`;
     }
 
     function editShift(i) {
@@ -219,6 +264,7 @@
     function deleteShift(i) { if(confirm("Delete this entry?")) { shifts.splice(i, 1); saveAndRefresh(); } }
     
     function saveAndRefresh() {
+        shifts.sort((a, b) => new Date(b.date) - new Date(a.date));
         localStorage.setItem('my_local_tips', JSON.stringify(shifts));
         populateMonthSelector();
         updateUI();
