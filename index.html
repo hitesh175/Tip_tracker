@@ -37,6 +37,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            transition: 0.3s ease;
         }
 
         .container { width: 100%; max-width: 400px; }
@@ -74,20 +75,19 @@
             width: 100%;
         }
 
-        /* Monthly Summary Card */
         .summary-card {
             background: var(--accent);
             color: white;
             padding: 25px;
             border-radius: 24px;
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
         .summary-label { font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase; }
         .summary-val { font-size: 36px; font-weight: 800; margin: 5px 0; }
         .summary-sub { font-size: 14px; opacity: 0.9; }
 
-        /* New Weekly Hours Section */
+        /* New Weekly Hours Layout */
         .weekly-stats {
             background: var(--weekly-bg);
             padding: 15px 20px;
@@ -99,7 +99,7 @@
             border: 1px solid var(--accent);
         }
         .weekly-label { font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; }
-        .weekly-val { font-size: 18px; font-weight: 800; color: var(--text); }
+        .weekly-val { font-size: 18px; font-weight: 800; }
 
         .history-card {
             background: var(--card);
@@ -124,9 +124,7 @@
 <div class="container">
     <header>
         <h2 style="margin:0">My Tips</h2>
-        <div style="display:flex; gap:10px">
-            <button onclick="toggleTheme()" style="border:none; background:none; font-size:20px">🌓</button>
-        </div>
+        <button onclick="toggleTheme()" style="border:none; background:none; font-size:20px">🌓</button>
     </header>
 
     <div class="input-section">
@@ -139,7 +137,7 @@
             <input type="number" id="m_part" placeholder="Mins">
         </div>
 
-        <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">TIPS (€)</label>
+        <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">TIPS EARNED (€)</label>
         <input type="number" id="tips" step="0.01" placeholder="0.00">
         
         <input type="hidden" id="editIndex" value="-1">
@@ -154,11 +152,11 @@
 
     <div class="weekly-stats">
         <div>
-            <div class="weekly-label">This Week's Hours</div>
+            <div class="weekly-label">Weekly Hours</div>
             <div class="weekly-val" id="weekHours">0h 0m</div>
         </div>
         <div style="text-align: right;">
-            <div class="weekly-label">Week Tips</div>
+            <div class="weekly-label">Weekly Tips</div>
             <div class="weekly-val" id="weekTips" style="color: var(--accent);">€0.00</div>
         </div>
     </div>
@@ -172,7 +170,6 @@
 </div>
 
 <script>
-    // Data remains safe in localStorage
     let shifts = JSON.parse(localStorage.getItem('my_local_tips')) || [];
 
     function formatTime(decimalHours) {
@@ -209,7 +206,7 @@
         
         let mTips = 0, mHours = 0, wTips = 0, wHours = 0;
         
-        // Calculate start of current week (Monday)
+        // Calculate Monday of current week
         const now = new Date();
         const day = now.getDay();
         const diff = now.getDate() - day + (day === 0 ? -6 : 1); 
@@ -218,10 +215,8 @@
         shifts.forEach((s, i) => {
             const sDate = new Date(s.date + 'T00:00:00');
             
-            // Monthly Logic
             if (s.date.startsWith(sel)) {
-                mTips += s.tips; 
-                mHours += s.hours;
+                mTips += s.tips; mHours += s.hours;
 
                 container.innerHTML += `
                     <div class="history-card">
@@ -237,10 +232,8 @@
                     </div>`;
             }
 
-            // Weekly Logic
             if (sDate >= startOfWeek) {
-                wTips += s.tips;
-                wHours += s.hours;
+                wTips += s.tips; wHours += s.hours;
             }
         });
 
@@ -261,7 +254,7 @@
         window.scrollTo(0,0);
     }
 
-    function deleteShift(i) { if(confirm("Delete this entry?")) { shifts.splice(i, 1); saveAndRefresh(); } }
+    function deleteShift(i) { if(confirm("Delete?")) { shifts.splice(i, 1); saveAndRefresh(); } }
     
     function saveAndRefresh() {
         shifts.sort((a, b) => new Date(b.date) - new Date(a.date));
@@ -290,7 +283,7 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const selMonth = document.getElementById('monthSelector').value;
-        doc.text(`Tips Report: ${selMonth}`, 14, 20);
+        doc.text(`Monthly Tip Report: ${selMonth}`, 14, 20);
         const data = shifts.filter(s => s.date.startsWith(selMonth)).map(s => [s.date, formatTime(s.hours), `€${s.tips.toFixed(2)}`]);
         doc.autoTable({ startY: 30, head: [['Date', 'Hours', 'Tips']], body: data });
         doc.save(`Tips_${selMonth}.pdf`);
