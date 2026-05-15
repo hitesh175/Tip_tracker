@@ -37,7 +37,6 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            transition: 0.3s ease;
         }
 
         .container { width: 100%; max-width: 400px; }
@@ -64,6 +63,16 @@
             box-sizing: border-box;
         }
 
+        .decimal-preview {
+            font-size: 11px;
+            color: var(--accent);
+            font-weight: 700;
+            margin-top: -8px;
+            margin-bottom: 12px;
+            display: block;
+            text-align: right;
+        }
+
         .btn-save {
             background: var(--accent);
             color: white;
@@ -87,7 +96,6 @@
         .summary-val { font-size: 36px; font-weight: 800; margin: 5px 0; }
         .summary-sub { font-size: 14px; opacity: 0.9; }
 
-        /* New Weekly Hours Layout */
         .weekly-stats {
             background: var(--weekly-bg);
             padding: 15px 20px;
@@ -131,11 +139,12 @@
         <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">DATE</label>
         <input type="date" id="date">
         
-        <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">DURATION</label>
+        <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">DURATION (HH:MM)</label>
         <div style="display:flex; gap:10px">
             <input type="number" id="h_part" placeholder="Hrs">
-            <input type="number" id="m_part" placeholder="Mins">
+            <input type="number" id="m_part" placeholder="Mins" oninput="updateDecimalPreview()">
         </div>
+        <span class="decimal-preview" id="decPreview">Total: 0.00 hours</span>
 
         <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">TIPS EARNED (€)</label>
         <input type="number" id="tips" step="0.01" placeholder="0.00">
@@ -172,10 +181,19 @@
 <script>
     let shifts = JSON.parse(localStorage.getItem('my_local_tips')) || [];
 
+    // --- Automatic Decimal Point Conversion Logic ---
+    function updateDecimalPreview() {
+        const h = parseInt(document.getElementById('h_part').value) || 0;
+        const m = parseInt(document.getElementById('m_part').value) || 0;
+        const decimalTotal = h + (m / 60);
+        document.getElementById('decPreview').innerText = `Total: ${decimalTotal.toFixed(2)} hours`;
+    }
+
     function formatTime(decimalHours) {
         const h = Math.floor(decimalHours);
         const m = Math.round((decimalHours - h) * 60);
-        return `${h}h ${m}m`;
+        // We can now show BOTH formats in the list for clarity
+        return `${h}h ${m}m (${decimalHours.toFixed(2)})`;
     }
 
     function toggleTheme() {
@@ -205,24 +223,18 @@
         container.innerHTML = '';
         
         let mTips = 0, mHours = 0, wTips = 0, wHours = 0;
-        
-        // Calculate Monday of current week
         const now = new Date();
-        const day = now.getDay();
-        const diff = now.getDate() - day + (day === 0 ? -6 : 1); 
-        const startOfWeek = new Date(now.setDate(diff)).setHours(0,0,0,0);
+        const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).setHours(0,0,0,0);
 
         shifts.forEach((s, i) => {
             const sDate = new Date(s.date + 'T00:00:00');
-            
             if (s.date.startsWith(sel)) {
                 mTips += s.tips; mHours += s.hours;
-
                 container.innerHTML += `
                     <div class="history-card">
                         <div>
                             <span class="date-label">${s.date}</span>
-                            <span class="meta-label">${formatTime(s.hours)} worked</span>
+                            <span class="meta-label">${formatTime(s.hours)}</span>
                             <div class="action-links">
                                 <span style="color:var(--accent)" onclick="editShift(${i})">Edit</span>
                                 <span style="color:#ff3b30" onclick="deleteShift(${i})">Delete</span>
@@ -231,15 +243,12 @@
                         <div class="tip-amount">€${s.tips.toFixed(2)}</div>
                     </div>`;
             }
-
-            if (sDate >= startOfWeek) {
-                wTips += s.tips; wHours += s.hours;
-            }
+            if (sDate >= startOfWeek) { wTips += s.tips; wHours += s.hours; }
         });
 
         document.getElementById('monthTips').innerText = `€${mTips.toFixed(2)}`;
-        document.getElementById('monthHours').innerText = formatTime(mHours) + " total";
-        document.getElementById('weekHours').innerText = formatTime(wHours);
+        document.getElementById('monthHours').innerText = `${mHours.toFixed(2)}h total`;
+        document.getElementById('weekHours').innerText = `${wHours.toFixed(2)}h`;
         document.getElementById('weekTips').innerText = `€${wTips.toFixed(2)}`;
     }
 
@@ -251,25 +260,24 @@
         document.getElementById('tips').value = s.tips;
         document.getElementById('editIndex').value = i;
         document.getElementById('mainBtn').innerText = "Update Tip";
+        updateDecimalPreview();
         window.scrollTo(0,0);
     }
 
     function deleteShift(i) { if(confirm("Delete?")) { shifts.splice(i, 1); saveAndRefresh(); } }
-    
     function saveAndRefresh() {
         shifts.sort((a, b) => new Date(b.date) - new Date(a.date));
         localStorage.setItem('my_local_tips', JSON.stringify(shifts));
         populateMonthSelector();
         updateUI();
     }
-
     function resetForm() {
         document.getElementById('date').valueAsDate = new Date();
         document.getElementById('h_part').value = ""; document.getElementById('m_part').value = "";
         document.getElementById('tips').value = ""; document.getElementById('editIndex').value = "-1";
         document.getElementById('mainBtn').innerText = "Save Tip";
+        document.getElementById('decPreview').innerText = "Total: 0.00 hours";
     }
-
     function populateMonthSelector() {
         const selector = document.getElementById('monthSelector');
         const months = new Set([new Date().toISOString().substring(0,7)]);
@@ -278,14 +286,13 @@
         selector.innerHTML = Array.from(months).sort().reverse().map(m => `<option value="${m}">${m}</option>`).join('');
         if(current) selector.value = current;
     }
-
     function downloadPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const selMonth = document.getElementById('monthSelector').value;
-        doc.text(`Monthly Tip Report: ${selMonth}`, 14, 20);
-        const data = shifts.filter(s => s.date.startsWith(selMonth)).map(s => [s.date, formatTime(s.hours), `€${s.tips.toFixed(2)}`]);
-        doc.autoTable({ startY: 30, head: [['Date', 'Hours', 'Tips']], body: data });
+        doc.text(`Tips Report: ${selMonth}`, 14, 20);
+        const data = shifts.filter(s => s.date.startsWith(selMonth)).map(s => [s.date, s.hours.toFixed(2), `€${s.tips.toFixed(2)}`]);
+        doc.autoTable({ startY: 30, head: [['Date', 'Hours (Decimal)', 'Tips']], body: data });
         doc.save(`Tips_${selMonth}.pdf`);
     }
 
