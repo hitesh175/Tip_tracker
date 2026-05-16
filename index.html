@@ -11,12 +11,12 @@
     <style>
         :root {
             --accent: #7b2ff7;
+            --accent-soft: #f3ebff;
             --bg: #fdfdff;
             --text: #1d1d1f;
             --text-muted: #86868b;
             --card: #ffffff;
             --border: #f2f2f7;
-            --weekly-bg: #f3ebff;
             --success: #34c759;
             --blue-track: #007aff;
             --blue-soft: #e5f1ff;
@@ -28,7 +28,7 @@
             --text-muted: #8e8e93;
             --card: #1c1c1e;
             --border: #2c2c2e;
-            --weekly-bg: #2c1a4d;
+            --accent-soft: #2c1a4d;
             --blue-soft: #0a2540;
         }
 
@@ -89,31 +89,42 @@
             width: 100%;
         }
 
-        /* Monthly Summary Divided Card */
-        .summary-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
+        /* Group Headings */
+        .section-title {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            margin-top: 5px;
         }
-        .summary-split { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center; }
-        .split-box.tips { color: var(--accent); }
-        .split-box.salary { color: var(--blue-track); }
-        .split-label { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
-        .split-val { font-size: 22px; font-weight: 800; margin: 4px 0; display: block; }
-        .split-hours { font-size: 12px; color: var(--text-muted); }
 
-        /* Weekly Stats Layout */
-        .weekly-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
-        .weekly-box { padding: 15px; border-radius: 16px; }
-        .weekly-box.tips { background: var(--weekly-bg); border: 1px solid var(--accent); }
-        .weekly-box.salary { background: var(--blue-soft); border: 1px solid var(--blue-track); }
-        .weekly-title { font-size: 10px; font-weight: 800; text-transform: uppercase; margin-bottom: 2px; }
-        .weekly-box.tips .weekly-title { color: var(--accent); }
-        .weekly-box.salary .weekly-title { color: var(--blue-track); }
-        .weekly-amount { font-size: 16px; font-weight: 800; }
+        /* Separated Dashboard Grid Layout */
+        .dashboard-grid { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+            margin-bottom: 20px; 
+        }
+        
+        .metric-card {
+            padding: 18px 14px;
+            border-radius: 20px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        
+        /* Specific Color Tracking Profiles */
+        .metric-card.tips { background: var(--accent-soft); border: 1px solid var(--accent); color: var(--text); }
+        .metric-card.salary { background: var(--blue-soft); border: 1px solid var(--blue-track); color: var(--text); }
+
+        .metric-label { font-size: 10px; font-weight: 800; text-transform: uppercase; opacity: 0.8; margin-bottom: 4px; }
+        .metric-card.tips .metric-label { color: var(--accent); }
+        .metric-card.salary .metric-label { color: var(--blue-track); }
+        
+        .metric-val { font-size: 20px; font-weight: 800; display: block; margin: 2px 0; }
+        .metric-sub { font-size: 12px; color: var(--text-muted); font-weight: 600; }
 
         /* Streamlined History Cards */
         .history-card {
@@ -130,8 +141,8 @@
         .meta-label { font-size: 13px; color: var(--text-muted); }
         
         .values-column { text-align: right; }
-        .row-salary { font-size: 14px; font-weight: 700; color: var(--blue-track); }
-        .row-tips { font-size: 14px; font-weight: 700; color: var(--success); margin-top: 2px; }
+        .row-salary { font-size: 15px; font-weight: 700; color: var(--blue-track); }
+        .row-tips { font-size: 15px; font-weight: 700; color: var(--success); margin-top: 2px; }
 
         .action-links { margin-top: 8px; font-size: 12px; }
         .action-links span { margin-right: 12px; font-weight: 600; cursor: pointer; }
@@ -141,7 +152,7 @@
 
 <div class="container">
     <header>
-        <h2 style="margin:0">My Tracker</h2>
+        <h2 style="margin:0">My Earnings</h2>
         <button onclick="toggleTheme()" style="border:none; background:none; font-size:20px">🌓</button>
     </header>
 
@@ -163,36 +174,35 @@
         <button id="mainBtn" class="btn-save" onclick="handleEntry()">Save Shift</button>
     </div>
 
-    <div class="summary-card">
-        <div class="summary-split">
-            <div class="split-box tips">
-                <div class="split-label">Monthly Tips</div>
-                <span class="split-val" id="monthTips">€0.00</span>
-                <span class="split-hours" id="monthHours">0.00h</span>
-            </div>
-            <div style="width: 1px; background: var(--border); height: 100%;"></div>
-            <div class="split-box salary">
-                <div class="split-label">Monthly Net Pay</div>
-                <span class="split-val" id="monthNetBase">€0.00</span>
-                <span class="split-hours" style="visibility: hidden;">placeholder</span>
-            </div>
+    <div class="section-title">Monthly Statement</div>
+    <div class="dashboard-grid">
+        <div class="metric-card tips">
+            <div class="metric-label">Total Tips</div>
+            <span class="metric-val" id="monthTips">€0.00</span>
+            <span class="metric-sub" id="monthHours">0.00h total</span>
+        </div>
+        <div class="metric-card salary">
+            <div class="metric-label">Net Base Pay</div>
+            <span class="metric-val" id="monthNetBase">€0.00</span>
+            <span class="metric-sub">After 10% tax</span>
         </div>
     </div>
 
-    <div class="weekly-grid">
-        <div class="weekly-box tips">
-            <div class="weekly-title">Weekly Tips</div>
-            <div class="weekly-amount" id="weekTips">€0.00</div>
-            <div style="font-size: 11px; color: var(--text-muted);" id="weekHours">0.00h</div>
+    <div class="section-title">Weekly Performance</div>
+    <div class="dashboard-grid">
+        <div class="metric-card tips">
+            <div class="metric-label">Weekly Tips</div>
+            <span class="metric-val" id="weekTips">€0.00</span>
+            <span class="metric-sub" id="weekHours">0.00h total</span>
         </div>
-        <div class="weekly-box salary">
-            <div class="weekly-title">Weekly Net Pay</div>
-            <div class="weekly-amount" id="weekNetBase">€0.00</div>
-            <div style="font-size: 11px; color: var(--text-muted);">After 10% tax</div>
+        <div class="metric-card salary">
+            <div class="metric-label">Weekly Net Pay</div>
+            <span class="metric-val" id="weekNetBase">€0.00</span>
+            <span class="metric-sub">Base salary</span>
         </div>
     </div>
 
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; margin-top:10px;">
         <select id="monthSelector" onchange="updateUI()" style="background:none; border:none; font-weight:700; color:var(--accent); font-size: 15px;"></select>
         <span onclick="downloadPDF()" style="font-size:12px; color:var(--text-muted); cursor:pointer">Export PDF</span>
     </div>
@@ -202,7 +212,7 @@
 
 <script>
     const HOURLY_RATE = 13.90;
-    const TAX_MULTIPLIER = 0.90; // 10% tax cut applied to base wage
+    const TAX_MULTIPLIER = 0.90; // Apply 10% tax cut to base pay only
     
     let shifts = JSON.parse(localStorage.getItem('my_local_tips')) || [];
 
@@ -278,7 +288,7 @@
         const monthNetBase = mHours * HOURLY_RATE * TAX_MULTIPLIER;
         const weekNetBase = wHours * HOURLY_RATE * TAX_MULTIPLIER;
 
-        // Populate separated metric fields
+        // Render metrics into completely separate dashboard cards
         document.getElementById('monthTips').innerText = `€${mTips.toFixed(2)}`;
         document.getElementById('monthNetBase').innerText = `€${monthNetBase.toFixed(2)}`;
         document.getElementById('monthHours').innerText = `${mHours.toFixed(2)}h total`;
