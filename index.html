@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Tips</title>
+    <title>My Tips & Earnings</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -17,6 +17,7 @@
             --card: #ffffff;
             --border: #f2f2f7;
             --weekly-bg: #f3ebff;
+            --success: #34c759;
         }
 
         [data-theme="dark"] {
@@ -37,6 +38,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            transition: 0.3s ease;
         }
 
         .container { width: 100%; max-width: 400px; }
@@ -93,8 +95,8 @@
             margin-bottom: 12px;
         }
         .summary-label { font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase; }
-        .summary-val { font-size: 36px; font-weight: 800; margin: 5px 0; }
-        .summary-sub { font-size: 14px; opacity: 0.9; }
+        .summary-val { font-size: 32px; font-weight: 800; margin: 5px 0; }
+        .summary-sub { font-size: 13px; opacity: 0.9; }
 
         .weekly-stats {
             background: var(--weekly-bg);
@@ -107,7 +109,7 @@
             border: 1px solid var(--accent);
         }
         .weekly-label { font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; }
-        .weekly-val { font-size: 18px; font-weight: 800; }
+        .weekly-val { font-size: 16px; font-weight: 800; }
 
         .history-card {
             background: var(--card);
@@ -121,7 +123,10 @@
         }
         .date-label { font-weight: 700; font-size: 16px; }
         .meta-label { font-size: 13px; color: var(--text-muted); }
-        .tip-amount { font-size: 18px; font-weight: 800; color: var(--accent); }
+        
+        .earnings-display { text-align: right; }
+        .net-pay-val { font-size: 16px; font-weight: 800; color: var(--text); }
+        .tip-amount { font-size: 13px; font-weight: 700; color: var(--success); }
 
         .action-links { margin-top: 8px; font-size: 12px; }
         .action-links span { margin-right: 12px; font-weight: 600; cursor: pointer; }
@@ -131,7 +136,7 @@
 
 <div class="container">
     <header>
-        <h2 style="margin:0">My Tips</h2>
+        <h2 style="margin:0">My Earnings</h2>
         <button onclick="toggleTheme()" style="border:none; background:none; font-size:20px">🌓</button>
     </header>
 
@@ -141,7 +146,7 @@
         
         <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 5px; display: block;">DURATION (HH:MM)</label>
         <div style="display:flex; gap:10px">
-            <input type="number" id="h_part" placeholder="Hrs">
+            <input type="number" id="h_part" placeholder="Hrs" oninput="updateDecimalPreview()">
             <input type="number" id="m_part" placeholder="Mins" oninput="updateDecimalPreview()">
         </div>
         <span class="decimal-preview" id="decPreview">Total: 0.00 hours</span>
@@ -150,23 +155,25 @@
         <input type="number" id="tips" step="0.01" placeholder="0.00">
         
         <input type="hidden" id="editIndex" value="-1">
-        <button id="mainBtn" class="btn-save" onclick="handleEntry()">Save Tip</button>
+        <button id="mainBtn" class="btn-save" onclick="handleEntry()">Save Shift</button>
     </div>
 
     <div class="summary-card">
-        <div class="summary-label">Monthly Tips</div>
-        <div class="summary-val" id="monthTips">€0.00</div>
-        <div class="summary-sub" id="monthHours">0h 0m total</div>
+        <div class="summary-label">Estimated Monthly Net</div>
+        <div class="summary-val" id="monthNetTotal">€0.00</div>
+        <div class="summary-sub">
+            <span id="monthHours">0.00h</span> worked • <span id="monthTips">€0.00</span> tips
+        </div>
     </div>
 
     <div class="weekly-stats">
         <div>
             <div class="weekly-label">Weekly Hours</div>
-            <div class="weekly-val" id="weekHours">0h 0m</div>
+            <div class="weekly-val" id="weekHours">0.00h</div>
         </div>
         <div style="text-align: right;">
-            <div class="weekly-label">Weekly Tips</div>
-            <div class="weekly-val" id="weekTips" style="color: var(--accent);">€0.00</div>
+            <div class="weekly-label">Weekly Net Take-Home</div>
+            <div class="weekly-val" id="weekNetTotal" style="color: var(--accent);">€0.00</div>
         </div>
     </div>
 
@@ -179,9 +186,11 @@
 </div>
 
 <script>
+    const HOURLY_RATE = 13.90;
+    const TAX_MULTIPLIER = 0.90; // Deducting 10% tax leaves 90% of base salary
+    
     let shifts = JSON.parse(localStorage.getItem('my_local_tips')) || [];
 
-    // --- Automatic Decimal Point Conversion Logic ---
     function updateDecimalPreview() {
         const h = parseInt(document.getElementById('h_part').value) || 0;
         const m = parseInt(document.getElementById('m_part').value) || 0;
@@ -192,7 +201,6 @@
     function formatTime(decimalHours) {
         const h = Math.floor(decimalHours);
         const m = Math.round((decimalHours - h) * 60);
-        // We can now show BOTH formats in the list for clarity
         return `${h}h ${m}m (${decimalHours.toFixed(2)})`;
     }
 
@@ -228,8 +236,15 @@
 
         shifts.forEach((s, i) => {
             const sDate = new Date(s.date + 'T00:00:00');
+            
+            // Calculate Day Net Earnings: (Hours * 13.90 * 0.90) + Tips
+            // Note: Tips are typically tax-free or processed separately, so tax is applied to base pay only.
+            const dayNetBase = s.hours * HOURLY_RATE * TAX_MULTIPLIER;
+            const dayNetTotal = dayNetBase + s.tips;
+
             if (s.date.startsWith(sel)) {
                 mTips += s.tips; mHours += s.hours;
+                
                 container.innerHTML += `
                     <div class="history-card">
                         <div>
@@ -240,16 +255,29 @@
                                 <span style="color:#ff3b30" onclick="deleteShift(${i})">Delete</span>
                             </div>
                         </div>
-                        <div class="tip-amount">€${s.tips.toFixed(2)}</div>
+                        <div class="earnings-display">
+                            <div class="net-pay-val">€${dayNetTotal.toFixed(2)} <span style="font-size:11px; font-weight:normal; color:var(--text-muted);">net</span></div>
+                            <div class="tip-amount">+€${s.tips.toFixed(2)} tips</div>
+                        </div>
                     </div>`;
             }
             if (sDate >= startOfWeek) { wTips += s.tips; wHours += s.hours; }
         });
 
+        // Monthly Summaries
+        const monthNetBase = mHours * HOURLY_RATE * TAX_MULTIPLIER;
+        const monthNetTotal = monthNetBase + mTips;
+
+        // Weekly Summaries
+        const weekNetBase = wHours * HOURLY_RATE * TAX_MULTIPLIER;
+        const weekNetTotal = weekNetBase + wTips;
+
+        document.getElementById('monthNetTotal').innerText = `€${monthNetTotal.toFixed(2)}`;
         document.getElementById('monthTips').innerText = `€${mTips.toFixed(2)}`;
-        document.getElementById('monthHours').innerText = `${mHours.toFixed(2)}h total`;
+        document.getElementById('monthHours').innerText = `${mHours.toFixed(2)}h`;
+        
         document.getElementById('weekHours').innerText = `${wHours.toFixed(2)}h`;
-        document.getElementById('weekTips').innerText = `€${wTips.toFixed(2)}`;
+        document.getElementById('weekNetTotal').innerText = `€${weekNetTotal.toFixed(2)}`;
     }
 
     function editShift(i) {
@@ -259,25 +287,28 @@
         document.getElementById('m_part').value = Math.round((s.hours - Math.floor(s.hours)) * 60);
         document.getElementById('tips').value = s.tips;
         document.getElementById('editIndex').value = i;
-        document.getElementById('mainBtn').innerText = "Update Tip";
+        document.getElementById('mainBtn').innerText = "Update Shift";
         updateDecimalPreview();
         window.scrollTo(0,0);
     }
 
-    function deleteShift(i) { if(confirm("Delete?")) { shifts.splice(i, 1); saveAndRefresh(); } }
+    function deleteShift(i) { if(confirm("Delete entry?")) { shifts.splice(i, 1); saveAndRefresh(); } }
+    
     function saveAndRefresh() {
         shifts.sort((a, b) => new Date(b.date) - new Date(a.date));
         localStorage.setItem('my_local_tips', JSON.stringify(shifts));
         populateMonthSelector();
         updateUI();
     }
+    
     function resetForm() {
         document.getElementById('date').valueAsDate = new Date();
         document.getElementById('h_part').value = ""; document.getElementById('m_part').value = "";
         document.getElementById('tips').value = ""; document.getElementById('editIndex').value = "-1";
-        document.getElementById('mainBtn').innerText = "Save Tip";
+        document.getElementById('mainBtn').innerText = "Save Shift";
         document.getElementById('decPreview').innerText = "Total: 0.00 hours";
     }
+    
     function populateMonthSelector() {
         const selector = document.getElementById('monthSelector');
         const months = new Set([new Date().toISOString().substring(0,7)]);
@@ -286,14 +317,31 @@
         selector.innerHTML = Array.from(months).sort().reverse().map(m => `<option value="${m}">${m}</option>`).join('');
         if(current) selector.value = current;
     }
+    
     function downloadPDF() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const selMonth = document.getElementById('monthSelector').value;
-        doc.text(`Tips Report: ${selMonth}`, 14, 20);
-        const data = shifts.filter(s => s.date.startsWith(selMonth)).map(s => [s.date, s.hours.toFixed(2), `€${s.tips.toFixed(2)}`]);
-        doc.autoTable({ startY: 30, head: [['Date', 'Hours (Decimal)', 'Tips']], body: data });
-        doc.save(`Tips_${selMonth}.pdf`);
+        doc.text(`Net Earnings & Tips Report: ${selMonth}`, 14, 20);
+        
+        let totalTips = 0, totalHours = 0;
+        const data = shifts.filter(s => s.date.startsWith(selMonth)).map(s => {
+            const netBase = s.hours * HOURLY_RATE * TAX_MULTIPLIER;
+            const netTotal = netBase + s.tips;
+            totalTips += s.tips; totalHours += s.hours;
+            return [s.date, s.hours.toFixed(2), `€${s.tips.toFixed(2)}`, `€${netTotal.toFixed(2)}`];
+        });
+        
+        const finalMonthNet = (totalHours * HOURLY_RATE * TAX_MULTIPLIER) + totalTips;
+        data.push([
+            {content: 'TOTALS', styles: {fontStyle: 'bold'}}, 
+            totalHours.toFixed(2), 
+            `€${totalTips.toFixed(2)}`, 
+            `€${finalMonthNet.toFixed(2)}`
+        ]);
+
+        doc.autoTable({ startY: 30, head: [['Date', 'Hours', 'Tips', 'Take-Home (Net)']], body: data });
+        doc.save(`Earnings_Report_${selMonth}.pdf`);
     }
 
     document.getElementById('date').valueAsDate = new Date();
