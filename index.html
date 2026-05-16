@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>My Tips & Earnings</title>
+    <title>My Earnings Tracker</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -18,6 +18,8 @@
             --border: #f2f2f7;
             --weekly-bg: #f3ebff;
             --success: #34c759;
+            --blue-track: #007aff;
+            --blue-soft: #e5f1ff;
         }
 
         [data-theme="dark"] {
@@ -27,6 +29,7 @@
             --card: #1c1c1e;
             --border: #2c2c2e;
             --weekly-bg: #2c1a4d;
+            --blue-soft: #0a2540;
         }
 
         body {
@@ -86,31 +89,33 @@
             width: 100%;
         }
 
+        /* Monthly Summary Divided Card */
         .summary-card {
-            background: var(--accent);
-            color: white;
-            padding: 25px;
+            background: var(--card);
+            border: 1px solid var(--border);
             border-radius: 24px;
-            text-align: center;
-            margin-bottom: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02);
         }
-        .summary-label { font-size: 12px; font-weight: 600; opacity: 0.8; text-transform: uppercase; }
-        .summary-val { font-size: 32px; font-weight: 800; margin: 5px 0; }
-        .summary-sub { font-size: 13px; opacity: 0.9; }
+        .summary-split { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: center; }
+        .split-box.tips { color: var(--accent); }
+        .split-box.salary { color: var(--blue-track); }
+        .split-label { font-size: 11px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
+        .split-val { font-size: 22px; font-weight: 800; margin: 4px 0; display: block; }
+        .split-hours { font-size: 12px; color: var(--text-muted); }
 
-        .weekly-stats {
-            background: var(--weekly-bg);
-            padding: 15px 20px;
-            border-radius: 20px;
-            margin-bottom: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid var(--accent);
-        }
-        .weekly-label { font-size: 11px; font-weight: 800; color: var(--accent); text-transform: uppercase; }
-        .weekly-val { font-size: 16px; font-weight: 800; }
+        /* Weekly Stats Layout */
+        .weekly-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
+        .weekly-box { padding: 15px; border-radius: 16px; }
+        .weekly-box.tips { background: var(--weekly-bg); border: 1px solid var(--accent); }
+        .weekly-box.salary { background: var(--blue-soft); border: 1px solid var(--blue-track); }
+        .weekly-title { font-size: 10px; font-weight: 800; text-transform: uppercase; margin-bottom: 2px; }
+        .weekly-box.tips .weekly-title { color: var(--accent); }
+        .weekly-box.salary .weekly-title { color: var(--blue-track); }
+        .weekly-amount { font-size: 16px; font-weight: 800; }
 
+        /* Streamlined History Cards */
         .history-card {
             background: var(--card);
             padding: 16px;
@@ -124,9 +129,9 @@
         .date-label { font-weight: 700; font-size: 16px; }
         .meta-label { font-size: 13px; color: var(--text-muted); }
         
-        .earnings-display { text-align: right; }
-        .net-pay-val { font-size: 16px; font-weight: 800; color: var(--text); }
-        .tip-amount { font-size: 13px; font-weight: 700; color: var(--success); }
+        .values-column { text-align: right; }
+        .row-salary { font-size: 14px; font-weight: 700; color: var(--blue-track); }
+        .row-tips { font-size: 14px; font-weight: 700; color: var(--success); margin-top: 2px; }
 
         .action-links { margin-top: 8px; font-size: 12px; }
         .action-links span { margin-right: 12px; font-weight: 600; cursor: pointer; }
@@ -136,7 +141,7 @@
 
 <div class="container">
     <header>
-        <h2 style="margin:0">My Earnings</h2>
+        <h2 style="margin:0">My Tracker</h2>
         <button onclick="toggleTheme()" style="border:none; background:none; font-size:20px">🌓</button>
     </header>
 
@@ -159,26 +164,36 @@
     </div>
 
     <div class="summary-card">
-        <div class="summary-label">Estimated Monthly Net</div>
-        <div class="summary-val" id="monthNetTotal">€0.00</div>
-        <div class="summary-sub">
-            <span id="monthHours">0.00h</span> worked • <span id="monthTips">€0.00</span> tips
+        <div class="summary-split">
+            <div class="split-box tips">
+                <div class="split-label">Monthly Tips</div>
+                <span class="split-val" id="monthTips">€0.00</span>
+                <span class="split-hours" id="monthHours">0.00h</span>
+            </div>
+            <div style="width: 1px; background: var(--border); height: 100%;"></div>
+            <div class="split-box salary">
+                <div class="split-label">Monthly Net Pay</div>
+                <span class="split-val" id="monthNetBase">€0.00</span>
+                <span class="split-hours" style="visibility: hidden;">placeholder</span>
+            </div>
         </div>
     </div>
 
-    <div class="weekly-stats">
-        <div>
-            <div class="weekly-label">Weekly Hours</div>
-            <div class="weekly-val" id="weekHours">0.00h</div>
+    <div class="weekly-grid">
+        <div class="weekly-box tips">
+            <div class="weekly-title">Weekly Tips</div>
+            <div class="weekly-amount" id="weekTips">€0.00</div>
+            <div style="font-size: 11px; color: var(--text-muted);" id="weekHours">0.00h</div>
         </div>
-        <div style="text-align: right;">
-            <div class="weekly-label">Weekly Net Take-Home</div>
-            <div class="weekly-val" id="weekNetTotal" style="color: var(--accent);">€0.00</div>
+        <div class="weekly-box salary">
+            <div class="weekly-title">Weekly Net Pay</div>
+            <div class="weekly-amount" id="weekNetBase">€0.00</div>
+            <div style="font-size: 11px; color: var(--text-muted);">After 10% tax</div>
         </div>
     </div>
 
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px">
-        <select id="monthSelector" onchange="updateUI()" style="background:none; border:none; font-weight:700; color:var(--accent)"></select>
+        <select id="monthSelector" onchange="updateUI()" style="background:none; border:none; font-weight:700; color:var(--accent); font-size: 15px;"></select>
         <span onclick="downloadPDF()" style="font-size:12px; color:var(--text-muted); cursor:pointer">Export PDF</span>
     </div>
 
@@ -187,7 +202,7 @@
 
 <script>
     const HOURLY_RATE = 13.90;
-    const TAX_MULTIPLIER = 0.90; // Deducting 10% tax leaves 90% of base salary
+    const TAX_MULTIPLIER = 0.90; // 10% tax cut applied to base wage
     
     let shifts = JSON.parse(localStorage.getItem('my_local_tips')) || [];
 
@@ -236,11 +251,7 @@
 
         shifts.forEach((s, i) => {
             const sDate = new Date(s.date + 'T00:00:00');
-            
-            // Calculate Day Net Earnings: (Hours * 13.90 * 0.90) + Tips
-            // Note: Tips are typically tax-free or processed separately, so tax is applied to base pay only.
             const dayNetBase = s.hours * HOURLY_RATE * TAX_MULTIPLIER;
-            const dayNetTotal = dayNetBase + s.tips;
 
             if (s.date.startsWith(sel)) {
                 mTips += s.tips; mHours += s.hours;
@@ -255,29 +266,26 @@
                                 <span style="color:#ff3b30" onclick="deleteShift(${i})">Delete</span>
                             </div>
                         </div>
-                        <div class="earnings-display">
-                            <div class="net-pay-val">€${dayNetTotal.toFixed(2)} <span style="font-size:11px; font-weight:normal; color:var(--text-muted);">net</span></div>
-                            <div class="tip-amount">+€${s.tips.toFixed(2)} tips</div>
+                        <div class="values-column">
+                            <div class="row-salary">€${dayNetBase.toFixed(2)} <span style="font-size:10px; font-weight:normal; color:var(--text-muted)">pay</span></div>
+                            <div class="row-tips">+€${s.tips.toFixed(2)} tips</div>
                         </div>
                     </div>`;
             }
             if (sDate >= startOfWeek) { wTips += s.tips; wHours += s.hours; }
         });
 
-        // Monthly Summaries
         const monthNetBase = mHours * HOURLY_RATE * TAX_MULTIPLIER;
-        const monthNetTotal = monthNetBase + mTips;
-
-        // Weekly Summaries
         const weekNetBase = wHours * HOURLY_RATE * TAX_MULTIPLIER;
-        const weekNetTotal = weekNetBase + wTips;
 
-        document.getElementById('monthNetTotal').innerText = `€${monthNetTotal.toFixed(2)}`;
+        // Populate separated metric fields
         document.getElementById('monthTips').innerText = `€${mTips.toFixed(2)}`;
-        document.getElementById('monthHours').innerText = `${mHours.toFixed(2)}h`;
+        document.getElementById('monthNetBase').innerText = `€${monthNetBase.toFixed(2)}`;
+        document.getElementById('monthHours').innerText = `${mHours.toFixed(2)}h total`;
         
-        document.getElementById('weekHours').innerText = `${wHours.toFixed(2)}h`;
-        document.getElementById('weekNetTotal').innerText = `€${weekNetTotal.toFixed(2)}`;
+        document.getElementById('weekHours').innerText = `${wHours.toFixed(2)}h total`;
+        document.getElementById('weekTips').innerText = `€${wTips.toFixed(2)}`;
+        document.getElementById('weekNetBase').innerText = `€${weekNetBase.toFixed(2)}`;
     }
 
     function editShift(i) {
@@ -322,26 +330,25 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const selMonth = document.getElementById('monthSelector').value;
-        doc.text(`Net Earnings & Tips Report: ${selMonth}`, 14, 20);
+        doc.text(`Divided Earnings Report: ${selMonth}`, 14, 20);
         
         let totalTips = 0, totalHours = 0;
         const data = shifts.filter(s => s.date.startsWith(selMonth)).map(s => {
             const netBase = s.hours * HOURLY_RATE * TAX_MULTIPLIER;
-            const netTotal = netBase + s.tips;
             totalTips += s.tips; totalHours += s.hours;
-            return [s.date, s.hours.toFixed(2), `€${s.tips.toFixed(2)}`, `€${netTotal.toFixed(2)}`];
+            return [s.date, s.hours.toFixed(2), `€${netBase.toFixed(2)}`, `€${s.tips.toFixed(2)}`];
         });
         
-        const finalMonthNet = (totalHours * HOURLY_RATE * TAX_MULTIPLIER) + totalTips;
+        const finalMonthBase = totalHours * HOURLY_RATE * TAX_MULTIPLIER;
         data.push([
             {content: 'TOTALS', styles: {fontStyle: 'bold'}}, 
             totalHours.toFixed(2), 
-            `€${totalTips.toFixed(2)}`, 
-            `€${finalMonthNet.toFixed(2)}`
+            `€${finalMonthBase.toFixed(2)}`, 
+            `€${totalTips.toFixed(2)}`
         ]);
 
-        doc.autoTable({ startY: 30, head: [['Date', 'Hours', 'Tips', 'Take-Home (Net)']], body: data });
-        doc.save(`Earnings_Report_${selMonth}.pdf`);
+        doc.autoTable({ startY: 30, head: [['Date', 'Hours', 'Net Pay (Base)', 'Tips']], body: data });
+        doc.save(`Separated_Report_${selMonth}.pdf`);
     }
 
     document.getElementById('date').valueAsDate = new Date();
