@@ -168,13 +168,13 @@
         
         <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">DURATION (HH:MM)</label>
         <div style="display:flex; gap:10px">
-            <input type="number" id="h_part" placeholder="Hrs" oninput="updateDecimalPreview()">
-            <input type="number" id="m_part" placeholder="Mins" oninput="updateDecimalPreview()">
+            <input type="number" id="h_part" min="0" max="24" step="1" placeholder="Hrs" oninput="updateDecimalPreview()">
+            <input type="number" id="m_part" min="0" max="59" step="1" placeholder="Mins" oninput="updateDecimalPreview()">
         </div>
         <span class="decimal-preview" id="decPreview">Total: 0.00 hours</span>
 
         <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 6px; display: block; letter-spacing: 0.5px;">TIPS EARNED (€)</label>
-        <input type="number" id="tips" step="0.01" placeholder="0.00">
+        <input type="number" id="tips" min="0" step="0.01" placeholder="0.00">
         
         <input type="hidden" id="editIndex" value="-1">
         <button id="mainBtn" class="btn-save" onclick="handleEntry()">Save Shift</button>
@@ -230,8 +230,9 @@
     }
 
     function formatTime(decimalHours) {
-        const h = Math.floor(decimalHours);
-        const m = Math.round((decimalHours - h) * 60);
+        const totalMinutes = Math.round(decimalHours * 60);
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
         return `${h}h ${m}m (${decimalHours.toFixed(2)})`;
     }
 
@@ -244,10 +245,15 @@
 
     function handleEntry() {
         const d = document.getElementById('date').value;
-        const h = (parseInt(document.getElementById('h_part').value) || 0) + ((parseInt(document.getElementById('m_part').value) || 0) / 60);
-        const t = parseFloat(document.getElementById('tips').value) || 0;
+        const hours = Number(document.getElementById('h_part').value);
+        const minutes = Number(document.getElementById('m_part').value);
+        const h = hours + minutes / 60;
+        const t = Number(document.getElementById('tips').value);
         const idx = parseInt(document.getElementById('editIndex').value);
-        if (!d) return;
+        if (!d || !Number.isInteger(hours) || !Number.isInteger(minutes) || hours < 0 || minutes < 0 || minutes > 59 || h <= 0 || h > 24 || !Number.isFinite(t) || t < 0) {
+            alert('Enter a date, a shift longer than zero and no more than 24 hours, minutes from 0 to 59, and non-negative tips.');
+            return;
+        }
         
         const entry = { date: d, hours: h, tips: t };
         if (idx === -1) shifts.push(entry); else shifts[idx] = entry;
@@ -264,6 +270,9 @@
         let mTips = 0, mHours = 0, wTips = 0, wHours = 0;
         const now = new Date();
         const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1))).setHours(0,0,0,0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(endOfWeek.getDate() + 7);
 
         shifts.forEach((s, i) => {
             const sDate = new Date(s.date + 'T00:00:00');
@@ -288,7 +297,7 @@
                         </div>
                     </div>`;
             }
-            if (sDate >= startOfWeek) { wTips += s.tips; wHours += s.hours; }
+            if (sDate >= startOfWeek && sDate < endOfWeek) { wTips += s.tips; wHours += s.hours; }
         });
 
         const monthNetBase = mHours * HOURLY_RATE * TAX_MULTIPLIER;
@@ -306,8 +315,9 @@
     function editShift(i) {
         const s = shifts[i];
         document.getElementById('date').value = s.date;
-        document.getElementById('h_part').value = Math.floor(s.hours);
-        document.getElementById('m_part').value = Math.round((s.hours - Math.floor(s.hours)) * 60);
+        const totalMinutes = Math.round(s.hours * 60);
+        document.getElementById('h_part').value = Math.floor(totalMinutes / 60);
+        document.getElementById('m_part').value = totalMinutes % 60;
         document.getElementById('tips').value = s.tips;
         document.getElementById('editIndex').value = i;
         document.getElementById('mainBtn').innerText = "Update Shift";
@@ -338,7 +348,7 @@
         shifts.forEach(s => months.add(s.date.substring(0,7)));
         const current = selector.value;
         selector.innerHTML = Array.from(months).sort().reverse().map(m => `<option value="${m}">${m}</option>`).join('');
-        if(current) selector.value = current;
+        if (months.has(current)) selector.value = current;
     }
     
     function downloadPDF() {

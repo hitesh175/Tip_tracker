@@ -27,4 +27,14 @@ Shift records and theme preferences use browser local storage. They are specific
 
 The code uses a fixed hourly rate of **€13.90** and a **0.90 multiplier** for estimated base pay. These are application constants, not an individual payroll calculation. Tips appear separately.
 
-The weekly calculation currently includes every record on or after the current Monday without an upper date bound, so future-dated shifts also contribute.
+Weekly summaries cover the current Monday through Sunday and exclude entries in subsequent weeks. Shift entries validate duration, minutes, and non-negative tip amounts. Time formatting rounds to whole minutes, preventing values such as 1h 60m.
+
+## Regression checks
+
+With Node.js installed:
+
+```bash
+node tests/tracker.test.cjs
+```
+
+These checks exercise calculations and input validation with a lightweight browser-interface stub.
